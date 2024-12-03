@@ -15,6 +15,9 @@ const defaultFeatureFlags = {
 	recallsApi: {
 		enabled: false,
 	},
+	automatedCt: {
+		enabled: false,
+	},
 };
 
 export type FeatureFlags = typeof defaultFeatureFlags;

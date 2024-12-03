@@ -18,6 +18,7 @@ describe('app config configuration', () => {
 		expect(flags.welshTranslation.translatePassTestResult).toBe(false);
 		expect(flags.issueDocsCentrally.enabled).toBe(true);
 		expect(flags.recallsApi.enabled).toBe(false);
+		expect(flags.automatedCt.enabled).toBe(false);
 	});
 
 	it('should override some flags with a partial response', async () => {
@@ -32,6 +33,9 @@ describe('app config configuration', () => {
 			recallsApi: {
 				enabled: true,
 			},
+			automatedCt: {
+				enabled: true,
+			},
 		};
 
 		getAppConfig.mockReturnValue(expectedFlags);
@@ -43,5 +47,6 @@ describe('app config configuration', () => {
 		expect(flags.welshTranslation.translateFailTestResult).toBe(false);
 		expect(flags.issueDocsCentrally.enabled).toBe(false);
 		expect(flags.recallsApi.enabled).toBe(true);
+		expect(flags.automatedCt.enabled).toBe(true);
 	});
 });
