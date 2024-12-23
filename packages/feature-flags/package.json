@@ -31,7 +31,7 @@
     "postpublish": "git clean -fd && npm run clean:temp"
   },
   "dependencies": {
-    "@aws-lambda-powertools/parameters": "^2.1.1",
+    "@aws-lambda-powertools/parameters": "^2.12.0",
     "lodash.merge": "^4.6.2"
   },
   "devDependencies": {
