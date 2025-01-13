@@ -1,8 +1,9 @@
 {
   "name": "@dvsa/service-bundler",
-  "version": "1.0.3",
+  "version": "2.0.0",
   "author": "DVSA",
   "license": "ISC",
+  "files": ["index.*", "LICENSE", "package.json"],
   "scripts": {
     "build": "npm run clean && tsc",
     "clean": "rimraf coverage dist && npm run clean:temp",
@@ -18,14 +19,14 @@
     "postpublish": "git clean -fd && npm run clean:temp"
   },
   "dependencies": {
-    "esbuild": "^0.25.1",
-    "esbuild-plugin-typescript-decorators": "^0.1.0",
-    "fs-extra": "^11.3.0",
-    "zip-lib": "^1.0.5"
+    "bun": "^1.1.43",
+    "fs-extra": "^11.2.0",
+    "zip-lib": "^1.0.4"
   },
   "devDependencies": {
     "@biomejs/biome": "1.8.3",
     "@dvsa/biome-config": "0.1.0",
+    "@types/bun": "^1.1.16",
     "@types/fs-extra": "^11.0.4",
     "@types/jest": "^29.5.14",
     "@types/node": "^20.13.0",
@@ -34,7 +35,6 @@
     "lint-staged": "^15.2.10",
     "rimraf": "^6.0.1",
     "ts-jest": "^29.2.5",
-    "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
   },
   "lint-staged": {
