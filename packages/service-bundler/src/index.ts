@@ -163,7 +163,7 @@ export class ServicePackager {
 
 		await build({
 			entrypoints: ['src/proxy/index.ts'],
-			outdir: `${ServicePackager.config.buildOutputDir}/src/proxy/index.js`,
+			outdir: `${ServicePackager.config.buildOutputDir}/src/proxy`,
 			...ServicePackager.coreBuildOptions,
 		});
 
@@ -192,7 +192,7 @@ export class ServicePackager {
 		// Bundle each folder within functions
 		for (const dir of directories) {
 			const entryPoint = join(functionsDir, dir, ServicePackager.handlerFileName);
-			const outdir = join(process.cwd(), ServicePackager.config.buildOutputDir, 'functions', dir, 'index.js');
+			const outdir = join(process.cwd(), ServicePackager.config.buildOutputDir, 'functions', dir);
 
 			await build({
 				entrypoints: [entryPoint],
