@@ -19,9 +19,9 @@ describe('app config configuration', () => {
 		expect(flags.welshTranslation.translateFailTestResult).toBe(true);
 		expect(flags.welshTranslation.translatePrsTestResult).toBe(true);
 		expect(flags.issueDocsCentrally.enabled).toBe(true);
-		expect(flags.recallsApi.enabled).toBe(false);
+		expect(flags.recallsApi.enabled).toBe(true);
 		expect(flags.automatedCt.enabled).toBe(false);
-		expect(flags.abandonedCerts.enabled).toBe(false);
+		expect(flags.abandonedCerts.enabled).toBe(true);
 	});
 
 	it('should override some flags with a partial response', async () => {
