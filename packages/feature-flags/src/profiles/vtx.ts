@@ -13,13 +13,13 @@ const defaultFeatureFlags = {
 		enabled: true,
 	},
 	recallsApi: {
-		enabled: false,
+		enabled: true,
 	},
 	automatedCt: {
 		enabled: false,
 	},
 	abandonedCerts: {
-		enabled: false,
+		enabled: true,
 	},
 };
 
