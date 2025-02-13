@@ -88,6 +88,9 @@ export class ServicePackager {
 		target: 'node',
 		external: ['@koa/*', '@babel/*'],
 		throw: true,
+		naming: {
+			entry: process.env.NODE_ENV === 'local' ? '[dir]/[name].js' : '[dir]/[name].mjs',
+		},
 	};
 
 	/**
@@ -155,7 +158,7 @@ export class ServicePackager {
 	 * @private
 	 */
 	private async buildAPIProxy() {
-		this.logger('Starting API proxy build.');
+		this.logger('Starting API proxy build.', LogColour.Yellow);
 
 		const proxyDir = join(process.cwd(), 'src', 'proxy');
 
@@ -179,7 +182,7 @@ export class ServicePackager {
 	 * @private
 	 */
 	private async buildFunctions() {
-		this.logger('Starting functions build(s).');
+		this.logger('Starting functions build(s).', LogColour.Yellow);
 
 		const functionsDir = join(process.cwd(), 'src', 'functions');
 
