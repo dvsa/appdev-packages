@@ -6,8 +6,8 @@ export function GET(route: string) {
 		Get(route)(target, propertyKey, descriptor);
 
 		// Additionally, apply the route with the branch name
-		if (process.env.BRANCH_NAME) {
-			Get(`/${process.env.BRANCH_NAME}${route}`)(target, propertyKey, descriptor);
+		if (process.env.BRANCH) {
+			Get(`/${process.env.BRANCH}${route}`)(target, propertyKey, descriptor);
 		}
 
 		return descriptor;
@@ -20,8 +20,8 @@ export function POST(route: RegExp) {
 		Post(route)(target, propertyKey, descriptor);
 
 		// Additionally, apply the route with the branch name
-		if (process.env.BRANCH_NAME) {
-			Post(`/${process.env.BRANCH_NAME}${route}`)(target, propertyKey, descriptor);
+		if (process.env.BRANCH) {
+			Post(`/${process.env.BRANCH}${route}`)(target, propertyKey, descriptor);
 		}
 
 		return descriptor;
@@ -34,8 +34,8 @@ export function PUT(route: string) {
 		Put(route)(target, propertyKey, descriptor);
 
 		// Additionally, apply the route with the branch name
-		if (process.env.BRANCH_NAME) {
-			Put(`/${process.env.BRANCH_NAME}${route}`)(target, propertyKey, descriptor);
+		if (process.env.BRANCH) {
+			Put(`/${process.env.BRANCH}${route}`)(target, propertyKey, descriptor);
 		}
 
 		return descriptor;
