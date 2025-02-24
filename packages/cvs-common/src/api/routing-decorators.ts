@@ -14,7 +14,7 @@ export function GET(route: string) {
 	};
 }
 
-export function POST(route: RegExp) {
+export function POST(route: string) {
 	return (target: unknown, propertyKey: string, descriptor: PropertyDescriptor) => {
 		// Apply the route
 		Post(route)(target, propertyKey, descriptor);

@@ -1,6 +1,6 @@
 {
   "name": "@dvsa/cvs-microservice-common",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "description": "Common package to be used in CVS microservices",
   "author": "DVSA",
   "license": "ISC",
