@@ -1,6 +1,6 @@
 {
   "name": "@dvsa/aws-utilities",
-  "version": "1.4.2",
+  "version": "1.5.0",
   "description": "Helper library for simplifying and standardising usage of AWS clients",
   "author": "DVSA",
   "license": "ISC",
