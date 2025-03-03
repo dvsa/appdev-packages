@@ -40,12 +40,13 @@ export class ClientCredentials {
 	private async fetchClientCredentials(): Promise<ClientCredentialsResponse> {
 		const response = await fetch(this.tokenUrl, {
 			method: "POST",
+			headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 			body: stringify({
 				grant_type: ClientCredentials.grant_type,
 				client_id: this.clientId,
 				client_secret: this.clientSecret,
 				scope: this.scope,
-			}),
+			})
 		});
 
 		if (!response.ok) {
