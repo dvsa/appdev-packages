@@ -1,6 +1,6 @@
 {
   "name": "@dvsa/appdev-api-common",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "keywords": [
     "dvsa",
     "nodejs",
@@ -20,7 +20,8 @@
     "build": "npm run clean && tsc",
     "build:package": "npm run build",
     "prepublishOnly": "npm run build:package && cp -r ./dist/* . && rm -rf ./dist",
-    "postpublish": "git clean -fd && npm run clean:temp"
+    "postpublish": "git clean -fd && npm run clean:temp",
+    "gitSecrets": "git secrets --scan . && git log -p -- . | scanrepo"
   },
   "dependencies": {
     "ajv": "^8.17.1",

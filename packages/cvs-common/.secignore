@@ -1,9 +1,0 @@
-.npmrc
-
-# Reason: "Contains word: secret"
-src/classes/aws/secrets-manager-client.ts
-src/classes/aws/__tests__/secrets-manager-client.spec.ts
-packages/common/src/classes/aws/secrets-manager-client.ts
-packages/common/src/classes/aws/__tests__/secrets-manager-client.spec.ts
-packages/aws-utils/src/classes/secrets-manager-client.ts
-packages/aws-utils/src/classes/__tests__/secrets-manager-client.spec.ts

@@ -1,0 +1,4 @@
+.npmrc
+
+# Reason: "Contains word: credential"
+packages/appdev-common/src/auth/client-credentials.ts
