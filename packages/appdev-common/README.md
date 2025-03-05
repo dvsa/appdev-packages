@@ -35,3 +35,15 @@ There are two ways in which this package can/should be published:
 ###### Requires manual version bump via the PR
 
 - Upon merge into `main` branch, the package will be published via a GHA workflow.
+
+### Developing locally
+To test our your changes before publishing to `npm`, you can use the following command:
+
+`npm run localLink`
+
+Then in the project you wish to use this package, run:
+
+`npm link @dvsa/app-dev-common`
+
+Once you've completed your local testing and/or to start again from scratch, you can run:
+`npm unlink @dvsa/app-dev-common`
