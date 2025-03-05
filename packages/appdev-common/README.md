@@ -43,7 +43,7 @@ To test our your changes before publishing to `npm`, you can use the following c
 
 Then in the project you wish to use this package, run:
 
-`npm link @dvsa/app-dev-common`
+`npm link @dvsa/appdev-api-common`
 
 Once you've completed your local testing and/or to start again from scratch, you can run:
-`npm unlink @dvsa/app-dev-common`
+`npm unlink @dvsa/appdev-api-common`
