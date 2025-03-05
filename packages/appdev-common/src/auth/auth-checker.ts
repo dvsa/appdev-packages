@@ -21,11 +21,15 @@ export class JWTAuthChecker {
 		roles: string | string[] = [],
 	): Promise<boolean> {
 		// if running locally, skip the token auth and role check
-		if (process.env.IS_OFFLINE === "true" && process.env.FORCE_LOCAL_AUTH !== "true")
+		if (
+			process.env.IS_OFFLINE === "true" &&
+			process.env.FORCE_LOCAL_AUTH !== "true"
+		)
 			return true;
 
 		// extract the token from the request headers
-		const headers = (request as RoutingControllersRequest)?.apiGateway.event.headers;
+		const headers = (request as RoutingControllersRequest)?.apiGateway.event
+			.headers;
 		const token = headers?.Authorization || headers?.authorization;
 
 		// if no token is found, then deny access to resource
