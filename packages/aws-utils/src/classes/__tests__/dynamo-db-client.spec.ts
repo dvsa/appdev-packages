@@ -66,6 +66,11 @@ describe('DynamoDb', () => {
 			DynamoDb.getClient();
 			expect(DynamoDBClient).toHaveBeenCalledWith({ region: 'eu-west-1' });
 		});
+
+		it('should use the config when provided', () => {
+			DynamoDb.getClient({ region: 'some-region' });
+			expect(DynamoDBClient).toHaveBeenCalledWith({ region: 'some-region' });
+		});
 	});
 
 	describe('fullScan', () => {
