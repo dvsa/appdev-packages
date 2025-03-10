@@ -107,7 +107,7 @@ export class DateTime {
 
 	isAfter(targetDate: AcceptableDate): boolean {
 		const date = new DateTime(targetDate);
-		return this.instance.isBefore(date.instance);
+		return this.instance.isAfter(date.instance);
 	}
 
 	isBetween(startDate: AcceptableDate, endDate: AcceptableDate): boolean {

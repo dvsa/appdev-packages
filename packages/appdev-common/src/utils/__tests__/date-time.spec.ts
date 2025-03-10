@@ -177,6 +177,26 @@ describe("DateTime", () => {
 			});
 		});
 
+		describe("isAfter", () => {
+			it("should return true when date is after target date", () => {
+				const dateTime1 = new DateTime("2023-05-15");
+				const dateTime2 = new DateTime("2023-05-14");
+				expect(dateTime1.isAfter(dateTime2)).toBe(true);
+			});
+
+			it("should return false when date is before target date", () => {
+				const dateTime1 = new DateTime("2023-05-14");
+				const dateTime2 = new DateTime("2023-05-15");
+				expect(dateTime1.isAfter(dateTime2)).toBe(false);
+			});
+
+			it("should accept various input types", () => {
+				const dateTime = new DateTime("2023-05-15");
+				expect(dateTime.isAfter("2023-05-14")).toBe(true);
+				expect(dateTime.isAfter(new Date(2023, 4, 14))).toBe(true);
+			});
+		});
+
 		describe("diff", () => {
 			it("should calculate difference between dates in specified unit", () => {
 				const dateTime1 = new DateTime("2023-05-15");
@@ -216,26 +236,6 @@ describe("DateTime", () => {
 				const dateTime2 = new DateTime("2023-05-15");
 
 				expect(dateTime1.compareDuration(dateTime2, "day")).toBe(5);
-			});
-		});
-
-		describe("isAfter", () => {
-			it("should return true when date is after target date", () => {
-				const dateTime1 = new DateTime("2023-05-15");
-				const dateTime2 = new DateTime("2023-05-14");
-				expect(dateTime1.isAfter(dateTime2)).toBe(true);
-			});
-
-			it("should return false when date is before target date", () => {
-				const dateTime1 = new DateTime("2023-05-14");
-				const dateTime2 = new DateTime("2023-05-15");
-				expect(dateTime1.isAfter(dateTime2)).toBe(false);
-			});
-
-			it("should accept various input types", () => {
-				const dateTime = new DateTime("2023-05-15");
-				expect(dateTime.isAfter("2023-05-14")).toBe(true);
-				expect(dateTime.isAfter(new Date(2023, 4, 14))).toBe(true);
 			});
 		});
 
