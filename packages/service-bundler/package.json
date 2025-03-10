@@ -20,7 +20,7 @@
   "dependencies": {
     "esbuild": "^0.25.1",
     "esbuild-plugin-typescript-decorators": "^0.1.0",
-    "fs-extra": "^11.2.0",
+    "fs-extra": "^11.3.0",
     "zip-lib": "^1.0.5"
   },
   "devDependencies": {
