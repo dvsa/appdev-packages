@@ -14,7 +14,8 @@ export class JWTAuthChecker {
 	/**
 	 * Perform a JWT token verification and role check
 	 * @param {RoutingControllersRequest} request
-	 * @param roles
+	 * @param {string | string[]} roles
+	 * @returns {Promise<boolean>}
 	 */
 	static async execute(
 		{ request }: Action,

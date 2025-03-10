@@ -10,8 +10,16 @@ export interface ClientCredentialsResponse {
 
 export class ClientCredentials {
 	private static accessToken: string;
-	private static readonly grant_type = "client_credentials";
+	private static readonly grantType = "client_credentials";
 
+	/**
+	 * Create a new instance of the ClientCredentials class
+	 * @param tokenUrl - The URL to fetch the access token from
+	 * @param clientId - The client id
+	 * @param clientSecret - The client secret
+	 * @param scope - The scope of the access token
+	 * @param debugMode - Whether to log debug messages
+	 */
 	constructor(
 		private readonly tokenUrl: string,
 		private readonly clientId: string,
@@ -20,6 +28,11 @@ export class ClientCredentials {
 		private readonly debugMode: boolean = false,
 	) {}
 
+	/**
+	 * Helper method to perform the client credentials flow and return the access token
+	 * This method will check for the existence of the token and if it is expired, it will fetch a new one
+	 * @returns {Promise<string>} - The access token
+	 */
 	public async getAccessToken(): Promise<string> {
 		if (!ClientCredentials.accessToken || this.isAccessTokenExpired()) {
 			const { access_token } = await this.fetchClientCredentials();
@@ -37,12 +50,17 @@ export class ClientCredentials {
 		return ClientCredentials.accessToken;
 	}
 
+	/**
+	 * Fetch the client credentials from the token URL
+	 * @returns {Promise<ClientCredentialsResponse>} - The response from the token URL
+	 * @private
+	 */
 	private async fetchClientCredentials(): Promise<ClientCredentialsResponse> {
 		const response = await fetch(this.tokenUrl, {
 			method: "POST",
 			headers: { "Content-Type": "application/x-www-form-urlencoded" },
 			body: stringify({
-				grant_type: ClientCredentials.grant_type,
+				grant_type: ClientCredentials.grantType,
 				client_id: this.clientId,
 				client_secret: this.clientSecret,
 				scope: this.scope,
@@ -57,6 +75,11 @@ export class ClientCredentials {
 		return (await response.json()) as Promise<ClientCredentialsResponse>;
 	}
 
+	/**
+	 * Check if the access token is expired
+	 * @returns {boolean} - Whether the access token is expired
+	 * @private
+	 */
 	private isAccessTokenExpired(): boolean {
 		try {
 			const decodedAccessToken = decodeJwt(ClientCredentials.accessToken);
