@@ -2,18 +2,24 @@ import Ajv from "ajv";
 import type { NextFunction, Response } from "express";
 import { HttpStatus } from "../api/http-status-codes";
 
+interface ValidateRequestBodyOptions {
+	isArray?: boolean;
+	errorDetails?: boolean;
+}
+
 const ajv = new Ajv({ removeAdditional: true, allErrors: true });
 ajv.addKeyword("tsEnumNames");
 
 /**
  * Decorator tp validate an express request body against a specified schema
  * @param {object} schema - the json schema you wish to use as the validator
- * @param isArray - whether the body is expected to be an array
- * @param errorDetails - whether to return detailed error messages (Note: errors are logged regardless of this setting)
+ * @param {ValidateRequestBodyOptions} opts
+ * - isArray: whether the body is expected to be an array
+ * - errorDetails: whether to return detailed error messages (Note: errors are logged regardless of this setting)
  */
 export function ValidateRequestBody<T>(
 	schema: object,
-	{ isArray, errorDetails } = { isArray: false, errorDetails: false },
+	opts: ValidateRequestBodyOptions = { isArray: false, errorDetails: false },
 ) {
 	return (_target: T, _propertyKey: string, descriptor: PropertyDescriptor) => {
 		const originalMethod = descriptor.value;
@@ -34,8 +40,8 @@ export function ValidateRequestBody<T>(
 				? JSON.parse(body.toString("utf-8"))
 				: body;
 
-			// Create the appropriate schema based on whether we're validating an array
-			const schemaToValidate = isArray
+			// Create the appropriate schema based on whether we're validating an array or a single object
+			const schemaToValidate = opts?.isArray
 				? { type: "array", items: schema }
 				: schema;
 
@@ -52,7 +58,7 @@ export function ValidateRequestBody<T>(
 					message: "Validation error",
 				};
 
-				if (errorDetails) {
+				if (opts?.errorDetails) {
 					Object.assign(response, { errors: validateFunction.errors });
 				}
 
