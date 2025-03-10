@@ -258,6 +258,21 @@ describe("DateTime", () => {
 				expect(dateTime.isBefore(new Date(2023, 4, 15))).toBe(true);
 			});
 		});
+
+		describe("isBetween", () => {
+			const dateTime1 = new DateTime("2023-05-14");
+			const dateTime2 = new DateTime("2023-05-16");
+
+			it("should return true when date is between two dates", () => {
+				const baseDate = new DateTime("2023-05-15");
+				expect(baseDate.isBetween(dateTime1, dateTime2)).toBe(true);
+			});
+
+			it("should return false when date is outside of the range", () => {
+				const baseDate = new DateTime("2023-05-17");
+				expect(baseDate.isBetween(dateTime1, dateTime2)).toBe(false);
+			});
+		});
 	});
 
 	describe("integration tests", () => {

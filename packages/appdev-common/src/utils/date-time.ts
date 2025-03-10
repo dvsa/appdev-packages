@@ -79,11 +79,6 @@ export class DateTime {
 		return this.instance.toISOString();
 	}
 
-	isAfter(targetDate: AcceptableDate): boolean {
-		const date = new DateTime(targetDate);
-		return this.instance.isAfter(date.instance);
-	}
-
 	diff(
 		targetDate: AcceptableDate,
 		unit: dayjs.QUnitType,
@@ -108,6 +103,20 @@ export class DateTime {
 	isBefore(targetDate: AcceptableDate): boolean {
 		const date = new DateTime(targetDate);
 		return this.instance.isBefore(date.instance);
+	}
+
+	isAfter(targetDate: AcceptableDate): boolean {
+		const date = new DateTime(targetDate);
+		return this.instance.isAfter(date.instance);
+	}
+
+	isBetween(startDate: AcceptableDate, endDate: AcceptableDate): boolean {
+		const start = new DateTime(startDate);
+		const end = new DateTime(endDate);
+		return (
+			this.instance.isAfter(start.instance) &&
+			this.instance.isBefore(end.instance)
+		);
 	}
 
 	static today(): Date {
