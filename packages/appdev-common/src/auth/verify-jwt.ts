@@ -19,12 +19,17 @@ export class JwtAuthoriser {
 	);
 	private static JWKS = createRemoteJWKSet(JwtAuthoriser.JWKS_URI);
 
+	/**
+	 * Create a new instance of the JwtAuthoriser class
+	 * @param clientId - the client id to validate the token against
+	 */
 	public constructor(clientId: string | null = null) {
 		this.clientId = clientId;
 	}
 
 	/**
 	 * Validate a JWT and return the decoded payload
+	 * @param {string} token - the JWT token to validate
 	 * @returns {Promise<JWTPayload>}
 	 */
 	public async verify(token: string): Promise<JWTPayload> {

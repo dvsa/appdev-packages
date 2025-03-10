@@ -1,50 +1,49 @@
 {
-  "name": "@dvsa/appdev-api-common",
-  "version": "0.3.3",
-  "keywords": [
-    "dvsa",
-    "nodejs",
-    "typescript"
-  ],
-  "author": "DVSA",
-  "description": "Utils library for common API functionality",
-  "publishConfig": {
-    "directory": "dist",
-    "access": "public"
-  },
-  "scripts": {
-    "localLink": "npm run clean && npm version patch && npm run build && cp package.json dist && cd dist && npm link",
-    "clean": "rimraf coverage dist",
-    "clean:temp": "rimraf auth api",
-    "lint": "biome check src",
-    "lint:fix": "npm run lint -- --write",
-    "build": "npm run clean && tsc",
-    "build:package": "npm run build",
-    "prepublishOnly": "npm run build:package && cp -r ./dist/* . && rm -rf ./dist",
-    "postpublish": "git clean -fd && npm run clean:temp",
-    "gitSecrets": "git secrets --scan . && git log -p -- . | scanrepo"
-  },
-  "dependencies": {
-    "ajv": "^8.17.1",
-    "jose": "^5.9.6"
-  },
-  "devDependencies": {
-    "@biomejs/biome": "1.9.3",
-    "@dvsa/biome-config": "0.3.0",
-    "@types/aws-lambda": "^8.10.145",
-    "@types/express": "^5.0.0",
-    "@types/jest": "^29.5.12",
-    "@types/node": "^20.14.8",
-    "husky": "^9.1.6",
-    "jest": "^29.7.0",
-    "lint-staged": "^15.2.10",
-    "rimraf": "^6.0.1",
-    "routing-controllers": "^0.11.2",
-    "ts-jest": "^29.2.5",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.5.2"
-  },
-  "lint-staged": {
-    "*.{js,ts,mjs,css,md,ts,json}": "npm run lint:fix -- --no-errors-on-unmatched"
-  }
+	"name": "@dvsa/appdev-api-common",
+	"version": "0.4.0",
+	"keywords": ["dvsa", "nodejs", "typescript"],
+	"author": "DVSA",
+	"description": "Utils library for common API functionality",
+	"publishConfig": {
+		"directory": "dist",
+		"access": "public"
+	},
+	"scripts": {
+		"localLink": "npm run clean && npm version patch && npm run build && cp package.json dist && cd dist && npm link",
+		"clean": "rimraf coverage dist",
+		"clean:temp": "rimraf auth api",
+		"lint": "biome check src",
+		"lint:fix": "npm run lint -- --write",
+		"build": "npm run clean && tsc",
+		"build:package": "npm run build",
+		"test": "jest",
+		"test:coverage": "jest --coverage",
+		"prepublishOnly": "npm run build:package && cp -r ./dist/* . && rm -rf ./dist",
+		"postpublish": "git clean -fd && npm run clean:temp",
+		"gitSecrets": "git secrets --scan . && git log -p -- . | scanrepo"
+	},
+	"dependencies": {
+		"ajv": "^8.17.1",
+		"dayjs": "^1.11.13",
+		"jose": "^5.9.6"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "1.9.3",
+		"@dvsa/biome-config": "0.3.0",
+		"@types/aws-lambda": "^8.10.145",
+		"@types/express": "^5.0.0",
+		"@types/jest": "^29.5.12",
+		"@types/node": "^20.14.8",
+		"husky": "^9.1.6",
+		"jest": "^29.7.0",
+		"lint-staged": "^15.2.10",
+		"rimraf": "^6.0.1",
+		"routing-controllers": "^0.11.2",
+		"ts-jest": "^29.2.5",
+		"ts-node": "^10.9.2",
+		"typescript": "^5.5.2"
+	},
+	"lint-staged": {
+		"*.{js,ts,mjs,css,md,ts,json}": "npm run lint:fix -- --no-errors-on-unmatched"
+	}
 }
