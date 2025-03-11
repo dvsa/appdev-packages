@@ -35,12 +35,9 @@ You can then replicate the pattern of publishing like so
         env:
           NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
 ```
+# @dvsa/appdev-api-common
 
-# Package Usage
-
-## @dvsa/appdev-api-common
-
-## JWTAuthChecker
+# JWTAuthChecker
 
 ## Overview
 `JWTAuthChecker` is a utility class for verifying JSON Web Tokens (JWT) and enforcing role-based access control (RBAC) in an Express application using `routing-controllers`.
@@ -289,9 +286,9 @@ const invalidDate = new DateTime("invalid-date");
 console.log(invalidDate.toString()); // Returns an invalid date string
 ```
 
-## @dvsa/aws-utilities
+# @dvsa/aws-utilities
 
-## CloudWatchClient
+# CloudWatchClient
 
 ## Overview
 `CloudWatchClient` is a utility class that provides an easy interface for interacting with AWS CloudWatch Logs. It supports executing log queries while optionally integrating with AWS X-Ray for request tracing.
@@ -476,6 +473,146 @@ try {
   const result = await DynamoDb.fullScan({ TableName: "your-table-name" });
 } catch (error) {
   console.error("Error scanning DynamoDB table:", error);
+}
+```
+# Rekognition
+
+## Overview
+`Rekognition` is a utility class that provides an easy interface for creating an AWS Rekognition client. It supports authentication and integrates with AWS X-Ray for tracing requests.
+
+## Installation
+Ensure that the required AWS SDK dependencies are installed:
+
+```sh
+npm install @aws-sdk/client-rekognition @aws-sdk/credential-providers aws-xray-sdk
+```
+
+## Usage
+
+### Importing the `Rekognition` Class
+```ts
+import { Rekognition } from '@dvsa/aws-utilities';
+```
+
+### Creating a Rekognition Client
+By default, the client is created with the `eu-west-1` region. You can override this by passing a custom configuration.
+
+```ts
+const rekognitionClient = Rekognition.getClient({ region: "us-east-1" });
+```
+
+#### Using Credentials from AWS Profiles
+If the `USE_CREDENTIALS` environment variable is set to `true`, credentials will be loaded from the AWS credentials file using the `fromIni` provider.
+
+```sh
+export USE_CREDENTIALS=true
+```
+
+### AWS X-Ray Integration
+If AWS X-Ray tracing is enabled (`_X_AMZN_TRACE_ID` is present in the environment variables), the client is automatically captured by AWS X-Ray for tracing requests.
+
+```sh
+export _X_AMZN_TRACE_ID=true
+```
+
+## Environment Variables
+The following environment variables affect `Rekognition` behavior:
+
+| Variable           | Description                                               |
+|--------------------|-----------------------------------------------------------|
+| `USE_CREDENTIALS` | Enables AWS credentials loading from `~/.aws/credentials` |
+| `_X_AMZN_TRACE_ID`| Enables AWS X-Ray tracing for Rekognition requests        |
+
+## Error Handling
+Errors may occur if invalid parameters are passed or if the executing IAM role lacks required permissions.
+
+Example error handling:
+```ts
+try {
+  const client = Rekognition.getClient();
+  // Call Rekognition API...
+} catch (error) {
+  console.error("Error using Rekognition client:", error);
+}
+```
+# S3Storage
+
+## Overview
+`S3Storage` is a utility class that provides an easy interface for interacting with AWS S3. It supports retrieving objects from S3 buckets while optionally integrating with AWS X-Ray for request tracing.
+
+## Installation
+Ensure that the required AWS SDK dependencies are installed:
+
+```sh
+npm install @aws-sdk/client-s3 @aws-sdk/credential-providers aws-xray-sdk
+```
+
+## Usage
+
+### Importing the `S3Storage` Class
+```ts
+import { S3Storage } from '@dvsa/aws-utilities';
+```
+
+### Creating an S3 Client
+By default, the client is created with the `eu-west-1` region. You can override this configuration by passing a custom configuration.
+
+```ts
+const s3Client = S3Storage.getClient({ region: "us-east-1" });
+```
+
+#### Using Credentials from AWS Profiles
+If `USE_CREDENTIALS` is set to `true`, credentials will be loaded from the AWS credentials file.
+
+```sh
+export USE_CREDENTIALS=true
+```
+
+### Downloading an Object from S3
+To download an object from an S3 bucket, use the `download` method.
+
+```ts
+async function downloadFile() {
+  try {
+    const params = {
+      Bucket: "your-bucket-name",
+      Key: "your-file-key",
+    };
+    const response = await S3Storage.download(params);
+    console.log("Downloaded file successfully:", response);
+  } catch (error) {
+    console.error("Error downloading file from S3", error);
+  }
+}
+
+downloadFile();
+```
+
+### AWS X-Ray Integration
+If AWS X-Ray tracing is enabled (`_X_AMZN_TRACE_ID` is present in the environment variables), the client is automatically captured by AWS X-Ray for tracing requests.
+
+```sh
+export _X_AMZN_TRACE_ID=true
+```
+
+## Environment Variables
+The following environment variables affect `S3Storage` behavior:
+
+| Variable           | Description                                               |
+|--------------------|-----------------------------------------------------------|
+| `USE_CREDENTIALS` | Enables AWS credentials loading from `~/.aws/credentials` |
+| `_X_AMZN_TRACE_ID`| Enables AWS X-Ray tracing for S3 requests                 |
+
+## Error Handling
+Errors may occur if invalid parameters are passed or if the executing IAM role lacks required permissions.
+
+Example error handling:
+```ts
+try {
+  const params = { Bucket: "your-bucket-name", Key: "your-file-key" };
+  const file = await S3Storage.download(params);
+} catch (error) {
+  console.error("Error downloading file from S3:", error);
 }
 ```
 
