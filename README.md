@@ -710,7 +710,95 @@ try {
   console.error("Error retrieving secret:", error);
 }
 ```
+# SimpleEmailService
 
+## Overview
+`SimpleEmailService` is a utility class for sending emails using AWS Simple Email Service (SES). It provides an easy interface for sending HTML and text emails while integrating with AWS X-Ray for request tracing.
+
+## Installation
+Ensure that the required AWS SDK dependencies are installed:
+
+```sh
+npm install @aws-sdk/client-ses @aws-sdk/credential-providers aws-xray-sdk
+```
+
+## Usage
+
+### Importing the `SimpleEmailService` Class
+```ts
+import { SimpleEmailService } from '@dvsa/aws-utilities';
+```
+
+### Creating an SES Client
+By default, the client is created with the `eu-west-1` region. You can override this configuration by passing a custom configuration.
+
+```ts
+const sesClient = SimpleEmailService.getClient({ region: "us-east-1" });
+```
+
+#### Using Credentials from AWS Profiles
+If `USE_CREDENTIALS` is set to `true`, credentials will be loaded from the AWS credentials file.
+
+```sh
+export USE_CREDENTIALS=true
+```
+
+### Sending an Email
+To send an email, use the `send` method and provide the necessary parameters.
+
+```ts
+async function sendEmail() {
+  try {
+    const response = await SimpleEmailService.send({
+      from: "sender@example.com",
+      to: ["recipient@example.com"],
+      subject: "Test Email",
+      htmlBody: "<p>This is a test email.</p>",
+      textBody: "This is a test email.",
+      cc: ["cc@example.com"],
+      bcc: ["bcc@example.com"],
+    });
+    console.log("Email sent successfully:", response);
+  } catch (error) {
+    console.error("Error sending email", error);
+  }
+}
+
+sendEmail();
+```
+
+### AWS X-Ray Integration
+If AWS X-Ray tracing is enabled (`_X_AMZN_TRACE_ID` is present in the environment variables), the client is automatically captured by AWS X-Ray for tracing requests.
+
+```sh
+export _X_AMZN_TRACE_ID=true
+```
+
+## Environment Variables
+The following environment variables affect `SimpleEmailService` behavior:
+
+| Variable           | Description                                               |
+|--------------------|-----------------------------------------------------------|
+| `USE_CREDENTIALS` | Enables AWS credentials loading from `~/.aws/credentials` |
+| `_X_AMZN_TRACE_ID`| Enables AWS X-Ray tracing for SES requests                |
+
+## Error Handling
+Errors may occur if invalid parameters are passed or if the executing IAM role lacks required permissions.
+
+Example error handling:
+```ts
+try {
+  const response = await SimpleEmailService.send({
+    from: "sender@example.com",
+    to: ["recipient@example.com"],
+    subject: "Test Email",
+    htmlBody: "This is a test email.",
+    textBody: "This is a test email."
+  });
+} catch (error) {
+  console.error("Error sending email:", error);
+}
+```
 
 
 
