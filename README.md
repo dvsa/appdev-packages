@@ -36,9 +36,11 @@ You can then replicate the pattern of publishing like so
           NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
 ```
 
-### Package Usage
+# Package Usage
 
-# JWTAuthChecker
+## @dvsa/appdev-api-common
+
+## JWTAuthChecker
 
 ## Overview
 `JWTAuthChecker` is a utility class for verifying JSON Web Tokens (JWT) and enforcing role-based access control (RBAC) in an Express application using `routing-controllers`.
@@ -195,6 +197,286 @@ try {
   console.error("Authentication error:", error);
 }
 ```
+
+# DateTime
+
+## Overview
+`DateTime` is a utility class built on `dayjs` to provide a structured and flexible way to handle date and time operations. It supports parsing, formatting, arithmetic operations, and comparisons.
+
+## Installation
+Ensure `dayjs` is installed in your project:
+
+```sh
+npm install dayjs
+```
+
+## Usage
+
+### Importing the `DateTime` Class
+```ts
+import { DateTime } from '@dvsa/appdev-api-common';
+```
+
+### Creating a `DateTime` Instance
+You can create an instance of `DateTime` using a `Date`, `string`, or another `DateTime` instance.
+
+```ts
+const now = new DateTime(); // Current date and time
+const fromString = new DateTime("15/03/2025", "DD/MM/YYYY");
+const fromDate = new DateTime(new Date());
+```
+
+### Formatting Dates
+You can format a `DateTime` instance using the `format` method.
+
+```ts
+console.log(now.format("YYYY-MM-DD HH:mm:ss"));
+```
+
+### Standard UK Local Date Formats
+The class provides helper methods for formatting dates in UK local formats:
+
+```ts
+console.log(DateTime.StandardUkLocalDateTimeAdapter(now)); // "DD/MM/YYYY HH:mm:ss"
+console.log(DateTime.StandardUkLocalDateAdapter(now)); // "DD/MM/YYYY"
+```
+
+### Arithmetic Operations
+You can add or subtract time units to/from a `DateTime` instance.
+
+```ts
+const futureDate = now.add(5, "days");
+const pastDate = now.subtract(2, "weeks");
+```
+
+### Date Comparisons
+```ts
+const date1 = new DateTime("2025-03-10");
+const date2 = new DateTime("2025-03-15");
+
+console.log(date1.isBefore(date2)); // true
+console.log(date2.isAfter(date1)); // true
+console.log(date1.isBetween("2025-03-05", "2025-03-20")); // true
+```
+
+### Difference Between Dates
+Get the difference in various units:
+
+```ts
+const daysDiff = date1.daysDiff(date2); // Number of whole days between dates
+const hoursDiff = date1.diff(date2, "hour");
+console.log(`Difference: ${daysDiff} days, ${hoursDiff} hours`);
+```
+
+### Comparing Durations
+```ts
+const duration = date1.compareDuration(date2, "minute");
+console.log(`Difference in minutes: ${duration}`);
+```
+
+### Getting the Current Date
+```ts
+const today = DateTime.today();
+console.log(today);
+```
+
+## Error Handling
+Ensure that input dates are in a valid format when creating a `DateTime` instance. If an invalid format is provided, `dayjs` will handle parsing failures gracefully but may return an invalid instance.
+
+Example error handling:
+```ts
+const invalidDate = new DateTime("invalid-date");
+console.log(invalidDate.toString()); // Returns an invalid date string
+```
+# CloudWatchClient
+
+## Overview
+`CloudWatchClient` is a utility class that provides an easy interface for interacting with AWS CloudWatch Logs. It supports executing log queries while optionally integrating with AWS X-Ray for request tracing.
+
+## Installation
+Ensure that you have the required AWS SDK dependencies installed:
+
+```sh
+npm install @aws-sdk/client-cloudwatch-logs @aws-sdk/credential-providers aws-xray-sdk
+```
+
+## Usage
+
+### Importing the `CloudWatchClient` Class
+```ts
+import { CloudWatchClient } from '@dvsa/aws-utilities';
+```
+
+### Creating a CloudWatch Logs Client
+By default, the client is created with the `eu-west-1` region. You can override this configuration by passing a custom configuration.
+
+```ts
+const cloudWatchClient = CloudWatchClient.getClient({ region: "us-east-1" });
+```
+
+#### Using Credentials from AWS Profiles
+If the `USE_CREDENTIALS` environment variable is set to `true`, credentials will be loaded from the AWS credentials file using the `fromIni` provider.
+
+```sh
+export USE_CREDENTIALS=true
+```
+
+### Executing a Log Query
+To run a log query against CloudWatch Logs, use the `startQuery` method.
+
+```ts
+async function fetchLogs() {
+  const params = {
+    logGroupName: "your-log-group",
+    queryString: "fields @timestamp, @message | sort @timestamp desc",
+    startTime: Math.floor(Date.now() / 1000) - 3600, // Last hour
+    endTime: Math.floor(Date.now() / 1000),
+  };
+
+  try {
+    const response = await CloudWatchClient.startQuery(params);
+    console.log("Query started successfully:", response.queryId);
+  } catch (error) {
+    console.error("Failed to start CloudWatch query", error);
+  }
+}
+
+fetchLogs();
+```
+
+### AWS X-Ray Integration
+If AWS X-Ray tracing is enabled (`_X_AMZN_TRACE_ID` is present in the environment variables), the client is automatically captured by AWS X-Ray for tracing requests.
+
+```sh
+export _X_AMZN_TRACE_ID=true
+```
+
+## Environment Variables
+The following environment variables influence the behavior of `CloudWatchClient`:
+
+| Variable           | Description                                               |
+|--------------------|-----------------------------------------------------------|
+| `USE_CREDENTIALS` | Enables AWS credentials loading from `~/.aws/credentials` |
+| `_X_AMZN_TRACE_ID`| Enables AWS X-Ray tracing for CloudWatch queries          |
+
+## Error Handling
+If CloudWatch Logs queries fail due to incorrect parameters or missing permissions, errors will be thrown. Ensure that the IAM role or user executing the queries has the necessary permissions.
+
+Example error handling:
+```ts
+try {
+  const result = await CloudWatchClient.startQuery(params);
+} catch (error) {
+  console.error("Error querying CloudWatch Logs:", error);
+}
+```
+# DynamoDb
+
+## Overview
+`DynamoDb` is a utility class that provides convenient methods for interacting with AWS DynamoDB. It supports querying, scanning, and recursive fetching while also handling authentication and AWS X-Ray tracing.
+
+## Installation
+Ensure that the required AWS SDK dependencies are installed:
+
+```sh
+npm install @aws-sdk/client-dynamodb @aws-sdk/lib-dynamodb @aws-sdk/credential-providers aws-xray-sdk
+```
+
+## Usage
+
+### Importing the `DynamoDb` Class
+```ts
+import { DynamoDb } from '@dvsa/aws-utilities';
+```
+
+### Creating a DynamoDB Client
+By default, the client is created with the `eu-west-1` region. You can override this by passing a custom configuration.
+
+```ts
+const dynamoClient = DynamoDb.getClient({ region: "us-east-1" });
+```
+
+#### Using Credentials from AWS Profiles
+If `USE_CREDENTIALS` is set to `true`, credentials will be loaded from the AWS credentials file.
+
+```sh
+export USE_CREDENTIALS=true
+```
+
+For local development with `serverless-offline`, set `IS_OFFLINE=true` and provide a local endpoint:
+
+```sh
+export IS_OFFLINE=true
+export DDB_OFFLINE_ENDPOINT=http://localhost:8000
+```
+
+### Scanning a DynamoDB Table
+To perform a full scan of a DynamoDB table, use the `fullScan` method.
+
+```ts
+async function scanTable() {
+  try {
+    const items = await DynamoDb.fullScan({ TableName: "your-table-name" });
+    console.log("Scanned items:", items);
+  } catch (error) {
+    console.error("Error scanning DynamoDB table", error);
+  }
+}
+
+scanTable();
+```
+
+### Recursive Fetching of DynamoDB Data
+The `recursiveFetch` method is useful for paginated queries or scans.
+
+```ts
+async function fetchAllItems() {
+  try {
+    const items = await DynamoDb.recursiveFetch(QueryCommand, {
+      TableName: "your-table-name",
+      KeyConditionExpression: "#pk = :pkValue",
+      ExpressionAttributeNames: { "#pk": "partitionKey" },
+      ExpressionAttributeValues: { ":pkValue": { S: "some-value" } },
+    });
+    console.log("Fetched items:", items);
+  } catch (error) {
+    console.error("Error querying DynamoDB table", error);
+  }
+}
+
+fetchAllItems();
+```
+
+### AWS X-Ray Integration
+If AWS X-Ray tracing is enabled (`_X_AMZN_TRACE_ID` is present in the environment variables), the client is automatically captured by AWS X-Ray for tracing requests.
+
+```sh
+export _X_AMZN_TRACE_ID=true
+```
+
+## Environment Variables
+The following environment variables affect `DynamoDb` behavior:
+
+| Variable             | Description                                              |
+|----------------------|----------------------------------------------------------|
+| `USE_CREDENTIALS`   | Enables AWS credentials loading from `~/.aws/credentials` |
+| `IS_OFFLINE`        | Uses credentials from `.env`/`serverless.yml` for local dev |
+| `DDB_OFFLINE_ENDPOINT` | Sets the endpoint for local DynamoDB when `IS_OFFLINE=true` |
+| `_X_AMZN_TRACE_ID`  | Enables AWS X-Ray tracing for DynamoDB operations       |
+
+## Error Handling
+Errors may occur if invalid parameters are passed or if the executing IAM role lacks required permissions.
+
+Example error handling:
+```ts
+try {
+  const result = await DynamoDb.fullScan({ TableName: "your-table-name" });
+} catch (error) {
+  console.error("Error scanning DynamoDB table:", error);
+}
+```
+
+
 
 
 
