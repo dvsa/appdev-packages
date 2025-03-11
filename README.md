@@ -615,7 +615,101 @@ try {
   console.error("Error downloading file from S3:", error);
 }
 ```
+# SecretsManager
 
+## Overview
+`SecretsManager` is a utility class that provides an easy interface for retrieving secrets from AWS Secrets Manager. It supports fetching and parsing secrets as JSON or YAML while integrating with AWS X-Ray for request tracing.
+
+## Installation
+Ensure that the required AWS SDK dependencies are installed:
+
+```sh
+npm install @aws-sdk/client-secrets-manager @aws-sdk/credential-providers aws-xray-sdk js-yaml
+```
+
+## Usage
+
+### Importing the `SecretsManager` Class
+```ts
+import { SecretsManager } from '@dvsa/aws-utilities';
+```
+
+### Creating a Secrets Manager Client
+By default, the client is created with the `eu-west-1` region. You can override this by passing a custom configuration.
+
+```ts
+const secretsClient = SecretsManager.getClient({ region: "us-east-1" });
+```
+
+#### Using Credentials from AWS Profiles
+If `USE_CREDENTIALS` is set to `true`, credentials will be loaded from the AWS credentials file.
+
+```sh
+export USE_CREDENTIALS=true
+```
+
+### Retrieving a Secret from AWS Secrets Manager
+To fetch a secret as a JSON-parsed object, use the `get` method.
+
+```ts
+async function fetchSecret() {
+  try {
+    const secret = await SecretsManager.get<{ username: string; password: string }>({
+      SecretId: "your-secret-name",
+    });
+    console.log("Fetched secret:", secret);
+  } catch (error) {
+    console.error("Error retrieving secret", error);
+  }
+}
+
+fetchSecret();
+```
+
+### Retrieving a YAML-Parsed Secret
+If the secret is stored in YAML format, pass `{ fromYaml: true }` as an additional parameter.
+
+```ts
+async function fetchYamlSecret() {
+  try {
+    const secret = await SecretsManager.get<{ apiKey: string }>({
+      SecretId: "your-secret-name",
+    }, undefined, { fromYaml: true });
+    console.log("Fetched YAML secret:", secret);
+  } catch (error) {
+    console.error("Error retrieving YAML secret", error);
+  }
+}
+
+fetchYamlSecret();
+```
+
+### AWS X-Ray Integration
+If AWS X-Ray tracing is enabled (`_X_AMZN_TRACE_ID` is present in the environment variables), the client is automatically captured by AWS X-Ray for tracing requests.
+
+```sh
+export _X_AMZN_TRACE_ID=true
+```
+
+## Environment Variables
+The following environment variables affect `SecretsManager` behavior:
+
+| Variable           | Description                                               |
+|--------------------|-----------------------------------------------------------|
+| `USE_CREDENTIALS` | Enables AWS credentials loading from `~/.aws/credentials` |
+| `_X_AMZN_TRACE_ID`| Enables AWS X-Ray tracing for Secrets Manager requests    |
+
+## Error Handling
+Errors may occur if invalid parameters are passed or if the executing IAM role lacks required permissions.
+
+Example error handling:
+```ts
+try {
+  const secret = await SecretsManager.get({ SecretId: "your-secret-name" });
+} catch (error) {
+  console.error("Error retrieving secret:", error);
+}
+```
 
 
 
