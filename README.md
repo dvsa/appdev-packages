@@ -288,7 +288,10 @@ Example error handling:
 const invalidDate = new DateTime("invalid-date");
 console.log(invalidDate.toString()); // Returns an invalid date string
 ```
-# CloudWatchClient
+
+## @dvsa/aws-utilities
+
+## CloudWatchClient
 
 ## Overview
 `CloudWatchClient` is a utility class that provides an easy interface for interacting with AWS CloudWatch Logs. It supports executing log queries while optionally integrating with AWS X-Ray for request tracing.
