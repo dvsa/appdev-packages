@@ -1,4 +1,5 @@
 import Ajv from "ajv";
+import addFormats from "ajv-formats";
 import type { NextFunction, Response } from "express";
 import { HttpStatus } from "../api/http-status-codes";
 
@@ -8,6 +9,7 @@ interface ValidateRequestBodyOptions {
 }
 
 const ajv = new Ajv({ removeAdditional: true, allErrors: true });
+addFormats(ajv);
 ajv.addKeyword("tsEnumNames");
 
 /**
