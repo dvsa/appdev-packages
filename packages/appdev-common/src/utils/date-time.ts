@@ -100,6 +100,10 @@ export class DateTime {
 		return date.instance.diff(this.instance, unit);
 	}
 
+	isValid(): boolean {
+		return this.instance.isValid();
+	}
+
 	isBefore(targetDate: AcceptableDate): boolean {
 		const date = new DateTime(targetDate);
 		return this.instance.isBefore(date.instance);
