@@ -1,7 +1,7 @@
 import Ajv from "ajv";
 import addFormats from "ajv-formats";
-import type { NextFunction, Response } from "express";
 import { HttpStatus } from "../api/http-status-codes";
+import { ValidationError } from "./validation-error";
 
 interface ValidateRequestBodyOptions {
 	isArray?: boolean;
@@ -21,21 +21,21 @@ ajv.addKeyword("tsEnumNames");
  */
 export function ValidateRequestBody<T>(
 	schema: object,
-	opts: ValidateRequestBodyOptions = { isArray: false, errorDetails: false },
+	opts: ValidateRequestBodyOptions = { isArray: false, errorDetails: true },
 ) {
 	return (_target: T, _propertyKey: string, descriptor: PropertyDescriptor) => {
 		const originalMethod = descriptor.value;
 
-		descriptor.value = async function (
-			body: T,
-			res: Response,
-			next: NextFunction,
-		) {
+		// biome-ignore lint/suspicious/noExplicitAny: tuples should be any in this instance
+		descriptor.value = async function (...args: any[]) {
+			const [body] = args;
+
 			// just to be safe, check the bodies existence before attempting to validate it
 			if (!body) {
-				return res
-					.status(HttpStatus.BAD_REQUEST)
-					.json({ message: "No request body detected" });
+				throw new ValidationError(
+					HttpStatus.BAD_REQUEST,
+					"No request body detected",
+				);
 			}
 
 			const payload = Buffer.isBuffer(body)
@@ -54,21 +54,18 @@ export function ValidateRequestBody<T>(
 
 			// if an error exists, then return a 400 with details
 			if (!isValid) {
+				console.error("Validation failed on body:", JSON.stringify(body));
 				console.error(validateFunction.errors);
 
-				const response = {
-					message: "Validation error",
-				};
-
-				if (opts?.errorDetails) {
-					Object.assign(response, { errors: validateFunction.errors });
-				}
-
-				return res.status(HttpStatus.BAD_REQUEST).json(response);
+				throw new ValidationError(
+					HttpStatus.BAD_REQUEST,
+					"Validation failed",
+					opts?.errorDetails ? validateFunction.errors : null,
+				);
 			}
 
 			// proceed with attached method if schema is valid
-			return originalMethod.apply(this, [body, res, next]);
+			return originalMethod.apply(this, args);
 		};
 	};
 }
