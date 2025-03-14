@@ -977,6 +977,255 @@ app.listen(3000, () => console.log("Server running on port 3000"));
 - **Better Maintainability**: Centralized status codes make updates easier.
 - **Reduced Errors**: Avoid mistyping HTTP status codes.
 
+# @dvsa/database
+
+# MyBatisSession
+
+## Overview
+`MyBatisSession` is a utility class that integrates MyBatis mapping with MySQL, allowing for structured and efficient query execution. It supports query execution, result transformation, and silent error handling while providing debugging capabilities.
+
+## Installation
+Ensure that the required dependencies are installed:
+
+```sh
+npm install mybatis-mapper mysql2 class-transformer
+```
+
+## Usage
+
+### Importing the `MyBatisSession` Class
+```ts
+import { MyBatisSession } from "./utils/mybatis-session";
+import { createConnection } from "mysql2/promise";
+```
+
+### Initializing a MyBatis Session
+To use MyBatis, you need a MySQL connection, a namespace, and mapper files.
+
+```ts
+async function initializeSession() {
+  const connection = await createConnection({
+    host: "localhost",
+    user: "root",
+    password: "password",
+    database: "test_db",
+  });
+
+  const session = new MyBatisSession(connection, "UserNamespace", ["./mappers/user.xml"], true);
+  return session;
+}
+```
+
+### Executing a Query
+```ts
+async function fetchUsers() {
+  const session = await initializeSession();
+  const users = await session.query("getUsers", {});
+  console.log("Users:", users);
+  await session.end();
+}
+
+fetchUsers();
+```
+
+### Selecting a Single Record and Mapping to a Model
+```ts
+class User {
+  id!: number;
+  name!: string;
+}
+
+async function getUserById(id: number) {
+  const session = await initializeSession();
+  const user = await session.selectOne("getUserById", { id }, User);
+  console.log("User:", user);
+  await session.end();
+}
+
+getUserById(1);
+```
+
+### Selecting Multiple Records and Mapping to a Model
+```ts
+async function getAllUsers() {
+  const session = await initializeSession();
+  const users = await session.selectList("getAllUsers", {}, User);
+  console.log("Users:", users);
+  await session.end();
+}
+
+getAllUsers();
+```
+
+### Handling Errors Silently
+If you want to execute a query and return an empty array on failure, use `selectAndCatchSilently`.
+
+```ts
+async function getUsersSafely() {
+  const session = await initializeSession();
+  const users = await session.selectAndCatchSilently("getAllUsers", {}, User);
+  console.log("Users:", users);
+  await session.end();
+}
+
+getUsersSafely();
+```
+
+### Closing the Connection
+```ts
+async function closeSession() {
+  const session = await initializeSession();
+  await session.end();
+}
+```
+
+## Debugging Mode
+If `debugMode` is enabled (`true`), queries will be logged before execution.
+
+```sh
+*** Query for namespace: UserNamespace & mapperID: getUsers ***
+SELECT * FROM users;
+***
+```
+
+## Error Handling
+Errors will be thrown if:
+- A query fails due to an invalid SQL statement or missing parameters.
+- A MyBatis mapper file is incorrect.
+- The MySQL connection is unavailable.
+
+Using `selectAndCatchSilently`, errors will be logged but return an empty array.
+
+```ts
+try {
+  const result = await session.query("invalidQuery", {});
+} catch (error) {
+  console.error("Error executing query:", error);
+}
+```
+# @dvsa/openapi-schema-generator
+
+# TypescriptToOpenApiSpec
+
+## Overview
+`TypescriptToOpenApiSpec` is a utility class that converts TypeScript interfaces into OpenAPI 3.0 schemas. It supports processing multiple interfaces, extracting definitions, handling nested references, and generating OpenAPI-compliant schemas.
+
+## Installation
+Ensure that the required dependencies are installed:
+
+```sh
+npm install openapi3-ts typescript
+```
+
+## Usage
+
+### Importing the `TypescriptToOpenApiSpec` Class
+```ts
+import { TypescriptToOpenApiSpec } from "./utils/typescript-to-openapi";
+```
+
+### Generating OpenAPI Schemas from TypeScript Interfaces
+
+#### Converting Specific Interfaces from Multiple Files
+If you have specific interfaces to convert, use `generateNamedSchemas`.
+
+```ts
+async function generateSchemas() {
+  const schemas = await TypescriptToOpenApiSpec.generateNamedSchemas([
+    { path: "models/User.ts", interfaceName: "User" },
+    { path: "models/Product.ts", interfaceName: "Product" },
+  ]);
+  console.log(JSON.stringify(schemas, null, 2));
+}
+
+generateSchemas();
+```
+
+#### Converting All Interfaces from Multiple Files
+To generate schemas for all interfaces in a file, use `generateUnnamedSchemas`.
+
+```ts
+async function generateAllSchemas() {
+  const schemas = await TypescriptToOpenApiSpec.generateUnnamedSchemas([
+    { path: "models/User.ts" },
+    { path: "models/Product.ts" },
+  ]);
+  console.log(JSON.stringify(schemas, null, 2));
+}
+
+generateAllSchemas();
+```
+
+### Handling Nested and Referenced Models
+This class automatically finds and includes referenced models within interfaces.
+
+```ts
+interface User {
+  id: string;
+  profile: Profile;
+}
+
+interface Profile {
+  age: number;
+  city: string;
+}
+```
+
+When `User` is converted, `Profile` is also included in the OpenAPI schema.
+
+### Output Example
+```json
+{
+  "User": {
+    "type": "object",
+    "properties": {
+      "id": { "type": "string" },
+      "profile": { "$ref": "#/components/schemas/Profile" }
+    },
+    "required": ["id", "profile"]
+  },
+  "Profile": {
+    "type": "object",
+    "properties": {
+      "age": { "type": "number" },
+      "city": { "type": "string" }
+    },
+    "required": ["age", "city"]
+  }
+}
+```
+
+### Handling Enums
+Enums in TypeScript are converted into OpenAPI schema `enum` definitions.
+
+```ts
+enum Role {
+  ADMIN = "admin",
+  USER = "user",
+}
+```
+
+Generates:
+```json
+{
+  "Role": {
+    "type": "string",
+    "enum": ["admin", "user"]
+  }
+}
+```
+
+### Debugging and Logging
+If you need to debug schema generation, add logging when processing definitions:
+```ts
+console.log("Generated OpenAPI schema:", JSON.stringify(schemas, null, 2));
+```
+
+## Error Handling
+- If a referenced model is not found, an error is thrown.
+- If an invalid TypeScript file is provided, an error is logged.
+- If an interface is not found in the specified file, an error is thrown.
+
 
 
 
