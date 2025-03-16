@@ -3,24 +3,23 @@
   "version": "2.0.0",
   "author": "DVSA",
   "license": "ISC",
-  "files": [
-    "index.*",
-    "LICENSE",
-    "package.json"
-  ],
+  "publishConfig": {
+    "directory": "dist",
+    "access": "public"
+  },
   "scripts": {
     "build": "npm run clean && tsc",
+    "build:package": "npm run build",
     "clean": "rimraf coverage dist && npm run clean:temp",
     "clean:temp": "rimraf api classes response",
     "gitSecrets": "git secrets --scan . && git log -p -- . | scanrepo",
     "lint": "biome check src",
     "lint:fix": "npm run lint -- --write",
     "prepare": "husky",
-    "test": "echo \"*** Tests to be added\"",
-    "test:coverage": "echo \"*** Tests to be added\"",
-    "build:package": "npm run build",
     "prepublishOnly": "npm run build:package && cp -r ./dist/* . && rm -rf ./dist",
-    "postpublish": "git clean -fd && npm run clean:temp"
+    "postpublish": "git clean -fd && npm run clean:temp",
+    "test": "echo \"*** Tests to be added\"",
+    "test:coverage": "echo \"*** Tests to be added\""
   },
   "dependencies": {
     "bun": "^1.2.5",
@@ -30,7 +29,7 @@
   "devDependencies": {
     "@biomejs/biome": "1.8.3",
     "@dvsa/biome-config": "0.1.0",
-    "@types/bun": "^1.1.16",
+    "@types/bun": "^1.2.5",
     "@types/fs-extra": "^11.0.4",
     "@types/jest": "^29.5.14",
     "@types/node": "^20.13.0",
