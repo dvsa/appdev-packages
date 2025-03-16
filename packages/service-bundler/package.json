@@ -3,7 +3,11 @@
   "version": "2.0.0",
   "author": "DVSA",
   "license": "ISC",
-  "files": ["index.*", "LICENSE", "package.json"],
+  "files": [
+    "index.*",
+    "LICENSE",
+    "package.json"
+  ],
   "scripts": {
     "build": "npm run clean && tsc",
     "clean": "rimraf coverage dist && npm run clean:temp",
@@ -19,9 +23,9 @@
     "postpublish": "git clean -fd && npm run clean:temp"
   },
   "dependencies": {
-    "bun": "^1.1.43",
-    "fs-extra": "^11.2.0",
-    "zip-lib": "^1.0.4"
+    "bun": "^1.2.5",
+    "fs-extra": "^11.3.0",
+    "zip-lib": "^1.0.5"
   },
   "devDependencies": {
     "@biomejs/biome": "1.8.3",
