@@ -35,3 +35,10 @@ You can then replicate the pattern of publishing like so
         env:
           NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
 ```
+
+# Monorepo packages
+- [@dvsa/appdev-api-common](packages/appdev-common/README.md#contents)
+- [@dvsa/aws-utilities](packages/aws-utils/README.md#contents)
+- [@dvsa/cvs-microservice-common](packages/cvs-common/README.md#contents)
+- [@dvsa/db-operations](packages/database/README.md#contents)
+- [@dvsa/openapi-schema-generator](packages/openapi-schema-generator/README.md#contents)
