@@ -54,9 +54,6 @@ export function ValidateRequestBody<T>(
 
 			// if an error exists, then return a 400 with details
 			if (!isValid) {
-				console.error("Validation failed on body:", JSON.stringify(body));
-				console.error(validateFunction.errors);
-
 				throw new ValidationError(
 					HttpStatus.BAD_REQUEST,
 					"Validation failed",
