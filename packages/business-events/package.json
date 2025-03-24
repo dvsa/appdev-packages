@@ -38,7 +38,7 @@
     "@dvsa/biome-config": "0.1.0",
     "@types/aws-lambda": "^8.10.145",
     "@types/jest": "^29.5.14",
-    "@types/node": "^20.14.2",
+    "@types/node": "^22.13.13",
     "aws-sdk-client-mock": "^4.0.1",
     "aws-sdk-client-mock-jest": "^4.1.0",
     "husky": "^9.1.7",
