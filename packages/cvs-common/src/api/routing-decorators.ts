@@ -1,5 +1,10 @@
 import { Get, Post, Put } from 'routing-controllers';
 
+/**
+ * Decorator to apply a GET route to a controller method
+ * @param {string} route
+ * @constructor
+ */
 export function GET(route: string) {
 	return (target: unknown, propertyKey: string, descriptor: PropertyDescriptor) => {
 		// Apply the route
@@ -14,6 +19,11 @@ export function GET(route: string) {
 	};
 }
 
+/**
+ * Decorator to apply a POST route to a controller method
+ * @param {string} route
+ * @constructor
+ */
 export function POST(route: string) {
 	return (target: unknown, propertyKey: string, descriptor: PropertyDescriptor) => {
 		// Apply the route
@@ -28,6 +38,11 @@ export function POST(route: string) {
 	};
 }
 
+/**
+ * Decorator to apply a PUT route to a controller method
+ * @param {string} route
+ * @constructor
+ */
 export function PUT(route: string) {
 	return (target: unknown, propertyKey: string, descriptor: PropertyDescriptor) => {
 		// Apply the route

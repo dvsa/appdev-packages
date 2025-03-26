@@ -305,3 +305,34 @@ Example error handling:
 const invalidDate = new DateTime("invalid-date");
 console.log(invalidDate.toString()); // Returns an invalid date string
 ```
+
+
+# Compression
+
+## Overview
+`DataCompression` is a utility class to simplify the compression & decompression using Gzip and Gunzip algorithms.
+
+## Usage
+
+### Importing the `DataCompression` Class
+```ts
+import { DataCompression } from '@dvsa/appdev-api-common';
+```
+
+### Compressing Data
+This is the process of taking a plain JSON object and compressing it using Gzip.
+
+```ts
+const data = { key: 'value' };
+const compressedData = DataCompression.compress(data);
+// H4sIAAAAAAAAA6tWyk6tVLJSKkvMKU1VqgUAv5wYPw8AAAA=
+```
+
+### Decompressing Data
+This is the process of taking a compressed JSON object and decompressing it using Gunzip.
+
+```ts
+const data = "H4sIAAAAAAAAA6tWyk6tVLJSKkvMKU1VqgUAv5wYPw8AAAA=";
+const decompressedData = DataCompression.decompress(data);
+// { key: 'value' }
+```
