@@ -9,12 +9,7 @@ jest.mock('typescript', () => ({
 }));
 
 describe('TypescriptToOpenApiSpec', () => {
-	let typescriptToOpenApiSpec: TypescriptToOpenApiSpec;
 	const mockFilePath = '/path/to/mock/file.ts';
-
-	beforeEach(() => {
-		typescriptToOpenApiSpec = new TypescriptToOpenApiSpec(mockFilePath);
-	});
 
 	afterEach(() => {
 		jest.resetAllMocks();
@@ -24,7 +19,7 @@ describe('TypescriptToOpenApiSpec', () => {
 		it('should generate OpenAPI schema from TypeScript interfaces', async () => {
 			// Mock the extractDefinitions method
 			// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-			jest.spyOn(typescriptToOpenApiSpec as any, 'extractDefinitions').mockReturnValue({
+			jest.spyOn(TypescriptToOpenApiSpec as any, 'extractDefinitions').mockReturnValue({
 				User: {
 					id: 'number',
 					name: 'string',
@@ -33,7 +28,7 @@ describe('TypescriptToOpenApiSpec', () => {
 				},
 			});
 
-			const result = await typescriptToOpenApiSpec.generateMany();
+			const result = await TypescriptToOpenApiSpec.generateMany(mockFilePath);
 
 			expect(result).toEqual({
 				User: {
@@ -64,7 +59,7 @@ describe('TypescriptToOpenApiSpec', () => {
 			};
 
 			// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-			const result = (typescriptToOpenApiSpec as any).dereferenceArrays(input);
+			const result = (TypescriptToOpenApiSpec as any).dereferenceArrays(input);
 
 			expect(result).toEqual({
 				Users: {
@@ -91,7 +86,7 @@ describe('TypescriptToOpenApiSpec', () => {
 			};
 
 			// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-			const result = (typescriptToOpenApiSpec as any).dictToOpenAPI(input);
+			const result = (TypescriptToOpenApiSpec as any).dictToOpenAPI(input);
 
 			expect(result).toEqual({
 				type: 'object',
@@ -117,7 +112,7 @@ describe('TypescriptToOpenApiSpec', () => {
 
 			for (const { input, expected } of testCases) {
 				// biome-ignore lint/suspicious/noExplicitAny: ignoring for spec
-				const result = (typescriptToOpenApiSpec as any).typeToSchemaObject(input);
+				const result = (TypescriptToOpenApiSpec as any).typeToSchemaObject(input);
 				expect(result).toEqual(expected);
 			}
 		});
@@ -133,16 +128,16 @@ describe('TypescriptToOpenApiSpec', () => {
 			(require('typescript').createProgram as jest.Mock).mockReturnValue(mockProgram);
 
 			// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-			jest.spyOn(typescriptToOpenApiSpec as any, 'visitNode').mockImplementation();
+			jest.spyOn(TypescriptToOpenApiSpec as any, 'visitNode').mockImplementation();
 
 			// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-			(typescriptToOpenApiSpec as any).extractDefinitions(mockFilePath);
+			(TypescriptToOpenApiSpec as any).extractDefinitions(mockFilePath);
 
 			expect(require('typescript').createProgram).toHaveBeenCalledWith([mockFilePath], {});
 			expect(mockProgram.getSourceFile).toHaveBeenCalledWith(mockFilePath);
 			expect(mockProgram.getTypeChecker).toHaveBeenCalled();
 			// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-			expect((typescriptToOpenApiSpec as any).visitNode).toHaveBeenCalled();
+			expect((TypescriptToOpenApiSpec as any).visitNode).toHaveBeenCalled();
 		});
 	});
 });
