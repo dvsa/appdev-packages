@@ -1,5 +1,4 @@
 import 'reflect-metadata';
-import console from 'node:console';
 import fs from 'node:fs/promises';
 import { join } from 'node:path';
 import { validationMetadatasToSchemas } from 'class-validator-jsonschema';
@@ -83,7 +82,7 @@ export class TypescriptToOpenApiSpec {
 	static async generate(
 		openAPIObject: OpenAPIObject,
 		pathsToInterfaces: SchemaPath[],
-		extra?: { proxyArgs?: ProxyArgs; additionalSchemas?: Record<string, unknown> }
+		extra?: { proxyArgs?: ProxyArgs; additionalSchemas?: Record<string, unknown>; verboseLogging?: boolean }
 	): Promise<OpenAPIObject> {
 		console.log('Starting OpenAPI spec generation...');
 
@@ -109,7 +108,7 @@ export class TypescriptToOpenApiSpec {
 
 		// Process proxied APIs if available
 		if (extra?.proxyArgs?.storage && extra?.proxyArgs?.app) {
-			console.log('Generating spec for proxied APIs...');
+			extra?.verboseLogging && console.log('Generating spec for proxied APIs...');
 
 			const proxySpec = routingControllersToSpec(extra.proxyArgs.storage, extra.proxyArgs.app, {
 				...openAPIObject,
@@ -138,9 +137,10 @@ export class TypescriptToOpenApiSpec {
 				},
 			};
 
-			console.log(`Found ${Object.keys(proxySpec.paths || {}).length} paths from proxied APIs`);
+			extra?.verboseLogging &&
+				console.log(`Found ${Object.keys(proxySpec.paths || {}).length} paths from proxied APIs`);
 		} else {
-			console.log('No proxied APIs configuration provided, skipping');
+			extra?.verboseLogging && console.log('No proxied APIs configuration provided, skipping');
 		}
 
 		// Process Lambda functions if they exist
@@ -148,23 +148,24 @@ export class TypescriptToOpenApiSpec {
 
 		try {
 			const functionsDir = join(process.cwd(), 'src/functions');
+
 			const dirExists = await fs
 				.access(functionsDir)
 				.then(() => true)
 				.catch(() => false);
 
 			if (dirExists) {
-				console.log('Importing Lambda handlers...');
+				extra?.verboseLogging && console.log('Importing Lambda handlers...');
 
 				const handlers = await fs.readdir(functionsDir, { withFileTypes: true });
 				const handlerDirs = handlers.filter((h) => h.isDirectory());
 
-				console.log(`Found ${handlerDirs.length} potential Lambda handler directories`);
+				extra?.verboseLogging && console.log(`Found ${handlerDirs.length} potential Lambda handler directories`);
 
 				for (const handler of handlerDirs) {
 					try {
 						const handlerPath = `@/src/functions/${handler.name}/index`;
-						console.log(`Importing handler: ${handlerPath}`);
+						extra?.verboseLogging && console.log(`Importing handler: ${handlerPath}`);
 
 						require(handlerPath);
 						lambdaHandlersRegistered = true;
@@ -173,7 +174,7 @@ export class TypescriptToOpenApiSpec {
 					}
 				}
 			} else {
-				console.log('No Lambda functions directory found at src/functions, skipping');
+				extra?.verboseLogging && console.log('No Lambda functions directory found at src/functions, skipping');
 			}
 		} catch (error) {
 			console.error('Error processing Lambda functions:', error);
@@ -182,11 +183,12 @@ export class TypescriptToOpenApiSpec {
 		// Get registered Lambda handlers and generate their spec
 		if (lambdaHandlersRegistered) {
 			const registeredHandlers = getRegisteredLambdaHandlers();
-			console.log(`Found ${registeredHandlers.length} registered Lambda handlers`);
+			extra?.verboseLogging && console.log(`Found ${registeredHandlers.length} registered Lambda handlers`);
 
 			if (registeredHandlers.length > 0) {
 				const lambdaSpec = generateLambdaOpenAPISpec(registeredHandlers);
-				console.log(`Generated spec for Lambda handlers with ${Object.keys(lambdaSpec.paths || {}).length} paths`);
+				extra?.verboseLogging &&
+					console.log(`Generated spec for Lambda handlers with ${Object.keys(lambdaSpec.paths || {}).length} paths`);
 
 				// Merge Lambda paths with existing paths
 				const mergedPaths = { ...finalSpec.paths };
@@ -198,11 +200,11 @@ export class TypescriptToOpenApiSpec {
 							...mergedPaths[path],
 							...lambdaSpec.paths[path],
 						};
-						console.log(`Merged methods for path: ${path}`);
+						extra?.verboseLogging && console.log(`Merged methods for path: ${path}`);
 					} else {
 						// Path only exists in Lambda spec, add it
 						mergedPaths[path] = lambdaSpec.paths[path];
-						console.log(`Added new path from Lambda: ${path}`);
+						extra?.verboseLogging && console.log(`Added new path from Lambda: ${path}`);
 					}
 				}
 
@@ -220,7 +222,7 @@ export class TypescriptToOpenApiSpec {
 				};
 			}
 		} else {
-			console.log('No Lambda handlers were registered, skipping Lambda spec generation');
+			extra?.verboseLogging && console.log('No Lambda handlers were registered, skipping Lambda spec generation');
 		}
 
 		if (extra?.additionalSchemas) {
@@ -238,7 +240,8 @@ export class TypescriptToOpenApiSpec {
 		}
 
 		// Log summary of the generated spec
-		console.log(`OpenAPI spec generation complete with ${Object.keys(finalSpec.paths || {}).length} total paths`);
+		extra?.verboseLogging &&
+			console.log(`OpenAPI spec generation complete with ${Object.keys(finalSpec.paths || {}).length} total paths`);
 
 		// Convert the merged spec to a JSON string
 		return finalSpec;

@@ -2,7 +2,7 @@ import { join } from 'node:path';
 import { TypescriptToOpenApiSpec } from '../index';
 
 describe('Generation of models', () => {
-	const mockFilePath = join(process.cwd(), 'src/__mocks__/models.ts');
+	const mockFilePath = join(process.cwd(), '__mocks__/models.ts');
 	const interfaceName = 'Model1';
 
 	afterEach(() => {
