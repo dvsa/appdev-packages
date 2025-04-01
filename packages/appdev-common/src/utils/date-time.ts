@@ -1,5 +1,7 @@
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
+import timezone from "dayjs/plugin/timezone";
+import utc from "dayjs/plugin/utc";
 
 type AcceptableDate = DateTime | string | Date | null;
 
@@ -7,23 +9,34 @@ export class DateTime {
 	private instance!: dayjs.Dayjs;
 	private static readonly UKLocalDateTimeFormat = "DD/MM/YYYY HH:mm:ss";
 	private static readonly UKLocalDateFormat = "DD/MM/YYYY";
+	private static readonly UK_TIMEZONE = "Europe/London";
 
 	constructor(
 		sourceDateTime?: AcceptableDate,
 		format: string | undefined = undefined,
 	) {
 		dayjs.extend(customParseFormat);
+		dayjs.extend(timezone);
+		dayjs.extend(utc);
 
 		if (sourceDateTime === undefined || sourceDateTime === null) {
-			this.instance = dayjs();
+			this.instance = dayjs().tz(DateTime.UK_TIMEZONE);
 		} else if (
 			typeof sourceDateTime === "string" ||
 			sourceDateTime instanceof Date
 		) {
-			this.instance = dayjs(sourceDateTime, format);
+			if (format) {
+				this.instance = dayjs.tz(sourceDateTime, format, DateTime.UK_TIMEZONE);
+			} else {
+				this.instance = dayjs.tz(sourceDateTime, DateTime.UK_TIMEZONE);
+			}
 		} else {
-			this.instance = dayjs(sourceDateTime.instance, format);
+			this.instance = dayjs(sourceDateTime.toDate()).tz(DateTime.UK_TIMEZONE);
 		}
+	}
+
+	toDate(): Date {
+		return this.instance.toDate();
 	}
 
 	static at(
@@ -54,13 +67,15 @@ export class DateTime {
 	}
 
 	add(amount: number, unit: dayjs.ManipulateType): DateTime {
-		this.instance = this.instance.add(amount, unit);
-		return this;
+		const result = new DateTime();
+		result.instance = this.instance.add(amount, unit);
+		return result;
 	}
 
 	subtract(amount: number, unit: dayjs.ManipulateType): DateTime {
-		this.instance = this.instance.subtract(amount, unit);
-		return this;
+		const result = new DateTime();
+		result.instance = this.instance.subtract(amount, unit);
+		return result;
 	}
 
 	format(formatString: string): string {
@@ -72,7 +87,7 @@ export class DateTime {
 	}
 
 	toString(): string {
-		return this.instance.toString();
+		return this.format(DateTime.UKLocalDateTimeFormat);
 	}
 
 	toISOString(): string {
@@ -124,6 +139,30 @@ export class DateTime {
 	}
 
 	static today(): Date {
-		return dayjs().toDate();
+		return dayjs().tz(DateTime.UK_TIMEZONE).startOf("day").toDate();
+	}
+
+	setTimezone(tz: string): DateTime {
+		const result = new DateTime();
+		result.instance = this.instance.tz(tz);
+		return result;
+	}
+
+	toUKTime(): DateTime {
+		const result = new DateTime();
+		result.instance = this.instance.tz(DateTime.UK_TIMEZONE);
+		return result;
+	}
+
+	getHour(): number {
+		return this.instance.hour();
+	}
+
+	getMinute(): number {
+		return this.instance.minute();
+	}
+
+	getSecond(): number {
+		return this.instance.second();
 	}
 }
