@@ -26,9 +26,9 @@ export class DateTime {
 			sourceDateTime instanceof Date
 		) {
 			if (format) {
-				this.instance = dayjs.tz(sourceDateTime, format, DateTime.UK_TIMEZONE);
+				this.instance = dayjs(sourceDateTime, format).tz(DateTime.UK_TIMEZONE);
 			} else {
-				this.instance = dayjs.tz(sourceDateTime, DateTime.UK_TIMEZONE);
+				this.instance = dayjs(sourceDateTime).tz(DateTime.UK_TIMEZONE);
 			}
 		} else {
 			this.instance = dayjs(sourceDateTime.toDate()).tz(DateTime.UK_TIMEZONE);
@@ -67,15 +67,13 @@ export class DateTime {
 	}
 
 	add(amount: number, unit: dayjs.ManipulateType): DateTime {
-		const result = new DateTime();
-		result.instance = this.instance.add(amount, unit);
-		return result;
+		this.instance = this.instance.add(amount, unit);
+		return this;
 	}
 
 	subtract(amount: number, unit: dayjs.ManipulateType): DateTime {
-		const result = new DateTime();
-		result.instance = this.instance.subtract(amount, unit);
-		return result;
+		this.instance = this.instance.subtract(amount, unit);
+		return this;
 	}
 
 	format(formatString: string): string {
