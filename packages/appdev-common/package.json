@@ -1,6 +1,6 @@
 {
 	"name": "@dvsa/appdev-api-common",
-	"version": "0.5.2",
+	"version": "0.5.1",
 	"keywords": ["dvsa", "nodejs", "typescript"],
 	"author": "DVSA",
 	"description": "Utils library for common API functionality",
