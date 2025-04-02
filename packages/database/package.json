@@ -30,7 +30,7 @@
   "dependencies": {
     "class-transformer": "^0.5.1",
     "mybatis-mapper": "^0.8.0",
-    "mysql2": "^3.11.0"
+    "mysql2": "^3.14.0"
   },
   "devDependencies": {
     "@biomejs/biome": "1.8.3",
