@@ -8,7 +8,7 @@ import {
 	LEC_TEST,
 	MSVA_TEST,
 	PROHIBITION_CLEARANCE_TEST,
-	TIR_TEST,
+	TIR_TEST, VOLUNTARY_IVA_TEST,
 	VTG_VTP_12_TEST,
 } from '../Constants';
 import { TestTypeHelper } from '../testTypeHelper';
@@ -26,6 +26,7 @@ describe('validateTestTypeIdInList', () => {
 		const resultAnnualWithCertificate = TestTypeHelper.validateTestTypeIdInList(ANNUAL_WITH_CERTIFICATE, '1');
 		const resultCentralDocs = TestTypeHelper.validateTestTypeIdInList(CENTRAL_DOCS_TEST, '50');
 		const resultAbandonedTest = TestTypeHelper.validateTestTypeIdInList(VTG_VTP_12_TEST, '1');
+		const resultVoluntaryIvaTest = TestTypeHelper.validateTestTypeIdInList(VOLUNTARY_IVA_TEST, '191');
 
 		expect(resultLEC).toBe(true);
 		expect(resultADR).toBe(true);
@@ -38,6 +39,7 @@ describe('validateTestTypeIdInList', () => {
 		expect(resultAnnualWithCertificate).toBe(true);
 		expect(resultCentralDocs).toBe(true);
 		expect(resultAbandonedTest).toBe(true);
+		expect(resultVoluntaryIvaTest).toBe(true);
 	});
 
 	it('should return false if test type id does not exist in list provided', () => {
@@ -52,6 +54,7 @@ describe('validateTestTypeIdInList', () => {
 		const resultAnnualWithCertificate = TestTypeHelper.validateTestTypeIdInList(ANNUAL_WITH_CERTIFICATE, '0');
 		const resultCentralDocs = TestTypeHelper.validateTestTypeIdInList(CENTRAL_DOCS_TEST, '0');
 		const resultAbandonedTest = TestTypeHelper.validateTestTypeIdInList(VTG_VTP_12_TEST, '0');
+		const resultVoluntaryIvaTest = TestTypeHelper.validateTestTypeIdInList(VOLUNTARY_IVA_TEST, '0');
 
 		expect(resultLEC).toBe(false);
 		expect(resultADR).toBe(false);
@@ -64,6 +67,7 @@ describe('validateTestTypeIdInList', () => {
 		expect(resultAnnualWithCertificate).toBe(false);
 		expect(resultCentralDocs).toBe(false);
 		expect(resultAbandonedTest).toBe(false);
+		expect(resultVoluntaryIvaTest).toBe(false);
 	});
 });
 
