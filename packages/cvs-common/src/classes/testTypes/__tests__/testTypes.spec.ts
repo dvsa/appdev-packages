@@ -8,7 +8,8 @@ import {
 	LEC_TEST,
 	MSVA_TEST,
 	PROHIBITION_CLEARANCE_TEST,
-	TIR_TEST, VOLUNTARY_IVA_TEST,
+	TIR_TEST,
+	VOLUNTARY_IVA_TEST,
 	VTG_VTP_12_TEST,
 } from '../Constants';
 import { TestTypeHelper } from '../testTypeHelper';
