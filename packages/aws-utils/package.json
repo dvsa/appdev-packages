@@ -29,7 +29,7 @@
     "postpublish": "git clean -fd && npm run clean:temp"
   },
   "dependencies": {
-    "aws-xray-sdk": "^3.10.2",
+    "aws-xray-sdk": "^3.10.3",
     "js-yaml": "^4.1.0"
   },
   "peerDependencies": {
