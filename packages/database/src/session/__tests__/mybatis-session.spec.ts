@@ -7,6 +7,7 @@ jest.mock('mysql2/promise', () => ({
 	createConnection: jest.fn().mockResolvedValue({
 		query: jest.fn().mockResolvedValue([[]]), // Mock a query method that resolves with an empty array
 		end: jest.fn().mockResolvedValue(undefined),
+		beginTransaction: jest.fn(), // needed for the dbType getter to work
 	}),
 }));
 
