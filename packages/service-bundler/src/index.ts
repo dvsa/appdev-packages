@@ -107,8 +107,8 @@ export class ServicePackager {
 			...(servicePackagerOptions.esbuildOptions || {}),
 			external: [
 				...(servicePackagerOptions.esbuildOptions?.external || []),
-				...(ServicePackager.coreBuildOptions.external || [])
-			]
+				...(ServicePackager.coreBuildOptions.external || []),
+			],
 		});
 
 		// Set the static properties using defaults or provided options
