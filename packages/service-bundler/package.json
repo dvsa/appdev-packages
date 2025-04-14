@@ -1,6 +1,6 @@
 {
   "name": "@dvsa/service-bundler",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "author": "DVSA",
   "license": "ISC",
   "scripts": {
@@ -36,5 +36,8 @@
     "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
+  },
+  "lint-staged": {
+    "*.{js,ts,mjs,css,md,ts,json}": "npm run lint:fix -- --no-errors-on-unmatched"
   }
 }

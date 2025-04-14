@@ -105,6 +105,10 @@ export class ServicePackager {
 		Object.assign(ServicePackager.coreBuildOptions, {
 			target: `node${servicePackagerOptions.nodeMajorVersion}`,
 			...(servicePackagerOptions.esbuildOptions || {}),
+			external: [
+				...(servicePackagerOptions.esbuildOptions?.external || []),
+				...(ServicePackager.coreBuildOptions.external || []),
+			],
 		});
 
 		// Set the static properties using defaults or provided options
