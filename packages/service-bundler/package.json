@@ -1,6 +1,6 @@
 {
   "name": "@dvsa/service-bundler",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "author": "DVSA",
   "license": "ISC",
   "scripts": {
