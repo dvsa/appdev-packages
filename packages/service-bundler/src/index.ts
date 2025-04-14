@@ -210,7 +210,13 @@ export class ServicePackager {
 				...ServicePackager.coreBuildOptions,
 
 				// exclude the packages needed for the API proxying
-				external: ['cors', 'express', 'routing-controllers', 'serverless-http'],
+				external: [
+					'cors',
+					'express',
+					'routing-controllers',
+					'serverless-http',
+					...(ServicePackager.coreBuildOptions.external || []),
+				],
 			});
 		}
 
