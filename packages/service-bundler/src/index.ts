@@ -102,8 +102,8 @@ export class ServicePackager {
 		// This allows for no config to be passed, but also the ability to override.
 		Object.assign(ServicePackager.coreBuildOptions, {
 			...(servicePackagerOptions.buildConfig || {}),
-		external: [
-				...(servicePackagerOptions.esbuildOptions?.external || []),
+			external: [
+				...(servicePackagerOptions.buildConfig?.external || []),
 				...(ServicePackager.coreBuildOptions.external || []),
 			],
 		});

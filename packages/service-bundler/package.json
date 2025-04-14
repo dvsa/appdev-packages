@@ -22,14 +22,14 @@
     "test:coverage": "echo \"*** Tests to be added\""
   },
   "dependencies": {
-    "bun": "^1.2.5",
+    "bun": "^1.2.9",
     "fs-extra": "^11.3.0",
     "zip-lib": "^1.0.5"
   },
   "devDependencies": {
     "@biomejs/biome": "1.8.3",
     "@dvsa/biome-config": "0.1.0",
-    "@types/bun": "^1.2.5",
+    "@types/bun": "^1.2.9",
     "@types/fs-extra": "^11.0.4",
     "@types/jest": "^29.5.14",
     "@types/node": "^20.13.0",
