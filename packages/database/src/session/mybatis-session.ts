@@ -33,7 +33,7 @@ export class MyBatisSession {
 	 * @param {Params} params - Query parameters
 	 * @return {Promise<unknown[]>}
 	 */
-	async query<T>(mapperId: string, params: Params = {}): Promise<T> {
+	async query(mapperId: string, params: Params = {}): Promise<unknown> {
 		let query = '';
 
 		try {
@@ -56,7 +56,7 @@ export class MyBatisSession {
 
 		if (this.dbType === DatabaseType.MYSQL) {
 			const [rows] = await (this.connection as MySQLConnection).query(query);
-			return rows as T;
+			return rows;
 		}
 
 		const result = await (this.connection as OracleConnection).execute(
@@ -64,7 +64,8 @@ export class MyBatisSession {
 			{},
 			{ outFormat: (await import('oracledb')).OUT_FORMAT_OBJECT }
 		);
-		return result.rows as T;
+
+		return result.rows ?? result;
 	}
 
 	/**
@@ -89,7 +90,7 @@ export class MyBatisSession {
 	 * @return {Promise<T[]>}
 	 */
 	async selectList<T>(mapperId: string, params: Params, model: ClassConstructor<T>): Promise<T[]> {
-		const rows = await this.query<unknown[]>(mapperId, params);
+		const rows = await this.query(mapperId, params);
 
 		// Ensure rows is always an array
 		const rowsArray = Array.isArray(rows) ? rows : rows ? [rows] : [];
