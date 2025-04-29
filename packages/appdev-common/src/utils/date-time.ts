@@ -141,6 +141,16 @@ export class DateTime {
 	}
 
 	/**
+	 * Sets the date to the start of a specified unit (mutable operation)
+	 * @param unit - Unit of time (day, month, year, etc.)
+	 * @returns This instance for chaining
+	 */
+	startOf(unit: dayjs.OpUnitType): DateTime {
+		this.instance = this.instance.startOf(unit);
+		return this;
+	}
+
+	/**
 	 * Converts to string in UK date time format
 	 * @returns Formatted date string
 	 */
@@ -236,17 +246,6 @@ export class DateTime {
 			this.instance.isAfter(start.instance) &&
 			this.instance.isBefore(end.instance)
 		);
-	}
-
-	/**
-	 * Gets today's date in UK timezone
-	 * For tests, returns a consistent date
-	 * @returns Today as Date object
-	 */
-	static today(): Date {
-		// This helps maintain consistent test expectations
-		// In tests, mock this method if needed
-		return dayjs("2023-05-15").toDate();
 	}
 
 	/**
