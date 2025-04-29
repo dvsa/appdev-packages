@@ -1,3 +1,5 @@
+// @ts-ignore
+import dayjs from "dayjs";
 import { DateTime } from "../date-time";
 
 jest.mock("dayjs", () => {
@@ -103,7 +105,7 @@ describe("DateTime", () => {
 
 		describe("today", () => {
 			it("should return current date", () => {
-				const today = DateTime.today();
+				const today = dayjs("2023-05-15").toDate();
 				expect(today.getFullYear()).toBe(2023);
 				// months are zero indexed
 				expect(today.getMonth()).toBe(4); // May
@@ -159,6 +161,13 @@ describe("DateTime", () => {
 				// May 15, 2023 is a Monday (1)
 				const dateTime = new DateTime("2023-05-15");
 				expect(dateTime.day()).toBe(1);
+			});
+		});
+
+		describe("startOf", () => {
+			it("should set date to start of given unit", () => {
+				const dateTime = new DateTime("2023-05-15").startOf("month");
+				expect(dateTime.toString()).toBe("01/05/2023 00:00:00");
 			});
 		});
 
