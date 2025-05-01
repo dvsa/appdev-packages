@@ -9,18 +9,19 @@
 		"access": "public"
 	},
 	"scripts": {
-		"localLink": "npm run clean && npm version patch && npm run build && cp package.json dist && cd dist && npm link",
-		"clean": "rimraf coverage dist",
-		"clean:temp": "rimraf auth api",
-		"lint": "biome check src",
-		"lint:fix": "npm run lint -- --write",
 		"build": "npm run clean && tsc",
 		"build:package": "npm run build",
-		"test": "jest",
-		"test:coverage": "jest --coverage",
+		"clean": "rimraf coverage dist",
+		"clean:temp": "rimraf auth api",
+		"gitSecrets": "git secrets --scan . && git log -p -- . | scanrepo",
+		"lint": "biome check src",
+		"lint:fix": "npm run lint -- --write",
+		"localLink": "npm run clean && npm version patch && npm run build && cp package.json dist && cd dist && npm link",
+		"prepare": "husky",
 		"prepublishOnly": "npm run build:package && cp -r ./dist/* . && rm -rf ./dist",
 		"postpublish": "git clean -fd && npm run clean:temp",
-		"gitSecrets": "git secrets --scan . && git log -p -- . | scanrepo"
+		"test": "jest",
+		"test:coverage": "jest --coverage"
 	},
 	"dependencies": {
 		"ajv": "^8.17.1",

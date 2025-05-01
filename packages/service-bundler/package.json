@@ -1,31 +1,35 @@
 {
   "name": "@dvsa/service-bundler",
-  "version": "1.0.3",
+  "version": "2.0.0",
   "author": "DVSA",
   "license": "ISC",
+  "publishConfig": {
+    "directory": "dist",
+    "access": "public"
+  },
   "scripts": {
     "build": "npm run clean && tsc",
+    "build:package": "npm run build",
     "clean": "rimraf coverage dist && npm run clean:temp",
     "clean:temp": "rimraf api classes response",
     "gitSecrets": "git secrets --scan . && git log -p -- . | scanrepo",
     "lint": "biome check src",
     "lint:fix": "npm run lint -- --write",
     "prepare": "husky",
-    "test": "echo \"*** Tests to be added\"",
-    "test:coverage": "echo \"*** Tests to be added\"",
-    "build:package": "npm run build",
     "prepublishOnly": "npm run build:package && cp -r ./dist/* . && rm -rf ./dist",
-    "postpublish": "git clean -fd && npm run clean:temp"
+    "postpublish": "git clean -fd && npm run clean:temp",
+    "test": "echo \"*** Tests to be added\"",
+    "test:coverage": "echo \"*** Tests to be added\""
   },
   "dependencies": {
-    "esbuild": "^0.25.1",
-    "esbuild-plugin-typescript-decorators": "^0.1.0",
+    "bun": "^1.2.9",
     "fs-extra": "^11.3.0",
     "zip-lib": "^1.0.5"
   },
   "devDependencies": {
     "@biomejs/biome": "1.8.3",
     "@dvsa/biome-config": "0.1.0",
+    "@types/bun": "^1.2.9",
     "@types/fs-extra": "^11.0.4",
     "@types/jest": "^29.5.14",
     "@types/node": "^20.13.0",
@@ -34,7 +38,6 @@
     "lint-staged": "^15.2.10",
     "rimraf": "^6.0.1",
     "ts-jest": "^29.2.5",
-    "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
   },
   "lint-staged": {
