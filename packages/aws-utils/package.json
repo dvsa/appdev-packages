@@ -1,6 +1,6 @@
 {
   "name": "@dvsa/aws-utilities",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "description": "Helper library for simplifying and standardising usage of AWS clients",
   "author": "DVSA",
   "license": "ISC",
@@ -29,30 +29,52 @@
     "postpublish": "git clean -fd && npm run clean:temp"
   },
   "dependencies": {
-    "aws-xray-sdk": "^3.10.2",
+    "aws-xray-sdk": "^3.10.3",
     "js-yaml": "^4.1.0"
   },
   "peerDependencies": {
     "@aws-sdk/client-cloudwatch-logs": ">=3.699.0 <4.0.0",
     "@aws-sdk/client-dynamodb": ">=3.699.0 <4.0.0",
+    "@aws-sdk/client-eventbridge": ">=3.699.0 <4.0.0",
+    "@aws-sdk/client-rekognition": ">=3.699.0 <4.0.0",
     "@aws-sdk/client-s3": ">=3.699.0 <4.0.0",
     "@aws-sdk/client-secrets-manager": ">=3.699.0 <4.0.0",
     "@aws-sdk/client-ses": ">=3.699.0 <4.0.0",
-    "@aws-sdk/client-rekognition": ">=3.699.0 <4.0.0",
     "@aws-sdk/credential-providers": ">=3.699.0 <4.0.0",
     "@aws-sdk/lib-dynamodb": ">=3.699.0 <4.0.0",
     "@aws-sdk/util-dynamodb": ">=3.699.0 <4.0.0"
   },
   "peerDependenciesMeta": {
-    "@aws-sdk/client-cloudwatch-logs": { "optional": true },
-    "@aws-sdk/client-dynamodb": { "optional": true },
-    "@aws-sdk/client-s3": { "optional": true },
-    "@aws-sdk/client-secrets-manager": { "optional": true },
-    "@aws-sdk/client-ses": { "optional": true },
-    "@aws-sdk/client-rekognition": { "optional": true },
-    "@aws-sdk/credential-providers": { "optional": true },
-    "@aws-sdk/lib-dynamodb": { "optional": true },
-    "@aws-sdk/util-dynamodb": { "optional": true }
+    "@aws-sdk/client-cloudwatch-logs": {
+      "optional": true
+    },
+    "@aws-sdk/client-dynamodb": {
+      "optional": true
+    },
+    "@aws-sdk/client-eventbridge": {
+      "optional": true
+    },
+    "@aws-sdk/client-s3": {
+      "optional": true
+    },
+    "@aws-sdk/client-secrets-manager": {
+      "optional": true
+    },
+    "@aws-sdk/client-ses": {
+      "optional": true
+    },
+    "@aws-sdk/client-rekognition": {
+      "optional": true
+    },
+    "@aws-sdk/credential-providers": {
+      "optional": true
+    },
+    "@aws-sdk/lib-dynamodb": {
+      "optional": true
+    },
+    "@aws-sdk/util-dynamodb": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@biomejs/biome": "1.8.3",
@@ -60,7 +82,7 @@
     "@types/aws-lambda": "^8.10.145",
     "@types/jest": "^29.5.14",
     "@types/js-yaml": "^4.0.9",
-    "@types/node": "^20.14.2",
+    "@types/node": "^22.15.3",
     "aws-sdk-client-mock": "^4.0.1",
     "aws-sdk-client-mock-jest": "^4.1.0",
     "husky": "^9.1.7",
