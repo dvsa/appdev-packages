@@ -138,7 +138,8 @@ describe('TypescriptToOpenApiSpec', () => {
 			const tsMock = require('typescript');
 			tsMock.createProgram.mockReturnValue(mockProgram);
 
-			const tsOpen = (TypescriptToOpenApiSpec as any);
+			// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+			const tsOpen = TypescriptToOpenApiSpec as any;
 
 			// Mock the visitNode method
 			const visitNodeSpy = jest.spyOn(tsOpen, 'visitNode').mockImplementation();
@@ -152,11 +153,7 @@ describe('TypescriptToOpenApiSpec', () => {
 			// Now check if getSourceFile was called with the correct argument
 			expect(mockProgram.getSourceFile).toHaveBeenCalledWith(mockFilePath);
 			expect(mockProgram.getTypeChecker).toHaveBeenCalled();
-			expect(visitNodeSpy).toHaveBeenCalledWith(
-				mockSourceFile,
-				mockTypeChecker,
-				{}
-			);
+			expect(visitNodeSpy).toHaveBeenCalledWith(mockSourceFile, mockTypeChecker, {});
 		});
 	});
 });
