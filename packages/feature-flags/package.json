@@ -1,16 +1,16 @@
 {
   "name": "@dvsa/cvs-feature-flags",
-  "version": "0.18.0",
+  "version": "0.19.0",
   "description": "Common package to be used in CVS to manage feature flags",
   "author": "DVSA",
   "license": "ISC",
   "files": [
+    "**.{js,ts}",
     "profiles/**",
     "LICENSE",
     "package.json",
-    "config.js",
-    "index.js",
-    "feature-flags.js"
+    "!jest.config.ts",
+    "!src/__tests__/*.ts"
   ],
   "keywords": [
     "typescript",
