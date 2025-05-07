@@ -24,15 +24,6 @@
     "prepublishOnly": "npm run build:package && cp -r ./dist/* . && rm -rf ./dist",
     "postpublish": "git clean -fd && npm run clean:temp"
   },
-  "files": [
-    "index.js",
-    "index.mjs",
-    "index.d.ts",
-    "index.d.mts",
-    "package.json",
-    "LICENSE",
-    "README.md"
-  ],
   "dependencies": {
     "openapi3-ts": "^4.4.0",
     "routing-controllers-openapi": "^5.0.0",
