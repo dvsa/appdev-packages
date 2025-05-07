@@ -1,10 +1,10 @@
 import 'reflect-metadata';
 import fs from 'node:fs/promises';
 import { join } from 'node:path';
-import { validationMetadatasToSchemas } from 'class-validator-jsonschema';
+import type { validationMetadatasToSchemas } from 'class-validator-jsonschema';
 import type { OpenAPIObject, OperationObject, PathItemObject, SchemaObject } from 'openapi3-ts/oas30';
 import type { MetadataArgsStorage, RoutingControllersOptions } from 'routing-controllers';
-import { routingControllersToSpec } from 'routing-controllers-openapi';
+import type { routingControllersToSpec } from 'routing-controllers-openapi';
 import {
 	type TypeChecker,
 	type Node as TypescriptNode,
@@ -64,7 +64,12 @@ export interface SchemaPath {
 	interfaceName?: string;
 }
 
-type ProxyArgs = { storage: MetadataArgsStorage; app: RoutingControllersOptions };
+type ProxyArgs = {
+	storage: MetadataArgsStorage;
+	app: RoutingControllersOptions;
+	validationMetadatasToSchemasFn: typeof validationMetadatasToSchemas;
+	routingControllersToSpecFn: typeof routingControllersToSpec;
+};
 
 export class TypescriptToOpenApiSpec {
 	/**
@@ -110,12 +115,12 @@ export class TypescriptToOpenApiSpec {
 		if (extra?.proxyArgs?.storage && extra?.proxyArgs?.app) {
 			extra?.verboseLogging && console.log('Generating spec for proxied APIs...');
 
-			const proxySpec = routingControllersToSpec(extra.proxyArgs.storage, extra.proxyArgs.app, {
+			const proxySpec = extra.proxyArgs.routingControllersToSpecFn(extra.proxyArgs.storage, extra.proxyArgs.app, {
 				...openAPIObject,
 				components: {
 					// @ts-ignore
 					schemas: {
-						...validationMetadatasToSchemas({ refPointerPrefix: '#/components/schemas/' }),
+						...extra.proxyArgs.validationMetadatasToSchemasFn({ refPointerPrefix: '#/components/schemas/' }),
 						...namedSchemas,
 						...unnamedSchemas,
 					},
@@ -639,9 +644,9 @@ export function LambdaAPI(options: LambdaAPIOptions) {
  * This needs to be applied to the handler class
  */
 
-// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+// biome-ignore lint/suspicious/noExplicitAny: Classes are too Dynamic to predict types / no need to fight typechecker
 export function registerLambdaHandler(target: any) {
-	// Check if handler is already registered to avoid duplicates
+	// Check if the handler is already registered to avoid duplicates
 	if (!global.lambdaHandlers.some((h) => h === target)) {
 		global.lambdaHandlers.push(target);
 	}
