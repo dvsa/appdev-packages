@@ -16,7 +16,7 @@
     "nodejs"
   ],
   "scripts": {
-    "build": "npm run clean && tsc",
+    "build": "npm run clean && tsup src/index.ts --format esm,cjs --dts --treeshake --minify",
     "clean": "rimraf coverage dist",
     "gitSecrets": "git secrets --scan . && git log -p -- . | scanrepo",
     "lint": "biome check src",

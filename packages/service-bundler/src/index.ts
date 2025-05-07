@@ -1,8 +1,8 @@
-import { existsSync, readdirSync } from 'node:fs';
+import { existsSync, readdirSync, writeFileSync } from 'node:fs';
 import { Dirent } from 'node:fs';
 import { stat } from 'node:fs/promises';
 import { join } from 'node:path';
-import { BuildOptions, build } from 'esbuild';
+import { type BuildOptions, build } from 'esbuild';
 import { esbuildDecorators } from 'esbuild-plugin-typescript-decorators';
 import { copy } from 'fs-extra';
 import { archiveFolder } from 'zip-lib';
@@ -171,11 +171,20 @@ export class ServicePackager {
 			return;
 		}
 
-		await build({
+		const outdir = `${ServicePackager.config.buildOutputDir}/src/proxy`;
+
+		const result = await build({
 			entryPoints: ['src/proxy/index.ts'],
-			outfile: `${ServicePackager.config.buildOutputDir}/src/proxy/index.js`,
+			outfile: `${outdir}/index.js`,
 			...ServicePackager.coreBuildOptions,
 		});
+
+		// If metafile was requested & generated, save it to a file
+		if (result.metafile) {
+			const metafilePath = join(process.cwd(), outdir, 'metafile.json');
+			writeFileSync(metafilePath, JSON.stringify(result.metafile, null, 2), 'utf-8');
+			this.logger(`Metafile saved to ${metafilePath}`, LogColour.Green);
+		}
 
 		this.logger('API proxy built complete.', LogColour.Green);
 	}
@@ -204,7 +213,7 @@ export class ServicePackager {
 			const entryPoint = join(functionsDir, dir, ServicePackager.handlerFileName);
 			const outdir = join(process.cwd(), ServicePackager.config.buildOutputDir, 'functions', dir);
 
-			await build({
+			const result = await build({
 				entryPoints: [{ in: entryPoint, out: 'index' }],
 				outdir,
 				...ServicePackager.coreBuildOptions,
@@ -218,6 +227,13 @@ export class ServicePackager {
 					...(ServicePackager.coreBuildOptions.external || []),
 				],
 			});
+
+			// If metafile was requested & generated, save it to a file
+			if (result.metafile) {
+				const metafilePath = join(outdir, 'metafile.json');
+				writeFileSync(metafilePath, JSON.stringify(result.metafile, null, 2), 'utf-8');
+				this.logger(`Metafile saved to ${metafilePath}`, LogColour.Green);
+			}
 		}
 
 		this.logger('Function build(s) completed.', LogColour.Green);
