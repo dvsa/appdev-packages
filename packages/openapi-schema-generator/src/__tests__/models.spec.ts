@@ -2,13 +2,8 @@ import { join } from 'node:path';
 import { TypescriptToOpenApiSpec } from '../index';
 
 describe('Generation of models', () => {
-	let typescriptToOpenApiSpec: TypescriptToOpenApiSpec;
-	const mockFilePath = join(process.cwd(), 'src/__mocks__/models.ts');
+	const mockFilePath = join(process.cwd(), '__mocks__/models.ts');
 	const interfaceName = 'Model1';
-
-	beforeEach(() => {
-		typescriptToOpenApiSpec = new TypescriptToOpenApiSpec(mockFilePath);
-	});
 
 	afterEach(() => {
 		jest.resetAllMocks();
@@ -18,7 +13,7 @@ describe('Generation of models', () => {
 		const badInterfaceName = 'BadModel';
 
 		try {
-			await typescriptToOpenApiSpec.generateByName(badInterfaceName);
+			await TypescriptToOpenApiSpec.generateByName(mockFilePath, badInterfaceName);
 		} catch (err) {
 			expect(err).toBeInstanceOf(Error);
 			expect((err as Error).message).toEqual(`Interface ${badInterfaceName} not found in ${mockFilePath}`);
@@ -26,7 +21,7 @@ describe('Generation of models', () => {
 	});
 
 	it("should only create a schema and it's children for the interfaceName requested", async () => {
-		const schemaObject = await typescriptToOpenApiSpec.generateByName(interfaceName);
+		const schemaObject = await TypescriptToOpenApiSpec.generateByName(mockFilePath, interfaceName);
 
 		// Confirm that "Model1" exists in the result
 		expect(Object.keys(schemaObject).some((key) => key === interfaceName)).toEqual(true);
@@ -38,7 +33,7 @@ describe('Generation of models', () => {
 	it('should create the full json schema without child models', async () => {
 		const otherInterfaceName = 'Model2';
 
-		const schemaObject = await typescriptToOpenApiSpec.generateByName(otherInterfaceName);
+		const schemaObject = await TypescriptToOpenApiSpec.generateByName(mockFilePath, otherInterfaceName);
 
 		expect(schemaObject).toEqual({
 			Model2: {
@@ -60,7 +55,7 @@ describe('Generation of models', () => {
 	});
 
 	it('should create the full json schema object with child models', async () => {
-		const schemaObject = await typescriptToOpenApiSpec.generateByName(interfaceName);
+		const schemaObject = await TypescriptToOpenApiSpec.generateByName(mockFilePath, interfaceName);
 
 		expect(schemaObject).toEqual({
 			DecConst: {
@@ -161,7 +156,7 @@ describe('Generation of models', () => {
 	});
 
 	it('should create schemas when the interface is extended', async () => {
-		const schemaObject = await typescriptToOpenApiSpec.generateByName('Model19');
+		const schemaObject = await TypescriptToOpenApiSpec.generateByName(mockFilePath, 'Model19');
 
 		expect(schemaObject).toEqual({
 			Model19: {

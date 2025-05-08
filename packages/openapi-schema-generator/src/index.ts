@@ -1,5 +1,10 @@
+import 'reflect-metadata';
+import fs from 'node:fs/promises';
 import { join } from 'node:path';
-import { type SchemaObject } from 'openapi3-ts/oas30';
+import type { validationMetadatasToSchemas } from 'class-validator-jsonschema';
+import type { OpenAPIObject, OperationObject, PathItemObject, SchemaObject } from 'openapi3-ts/oas30';
+import type { MetadataArgsStorage, RoutingControllersOptions } from 'routing-controllers';
+import type { routingControllersToSpec } from 'routing-controllers-openapi';
 import {
 	type TypeChecker,
 	type Node as TypescriptNode,
@@ -43,6 +48,11 @@ interface OpenAPIRefSchemaObject extends OpenAPISchemaObjectBase {
 	$ref: string;
 }
 
+type LambdaAPIOptions = OperationObject & {
+	path: string;
+	method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+};
+
 type SpecificOpenAPISchemaObject =
 	| OpenAPIObjectSchemaObject
 	| OpenAPIArraySchemaObject
@@ -54,21 +64,199 @@ export interface SchemaPath {
 	interfaceName?: string;
 }
 
+type ProxyArgs = {
+	storage: MetadataArgsStorage;
+	app: RoutingControllersOptions;
+	validationMetadatasToSchemasFn: typeof validationMetadatasToSchemas;
+	routingControllersToSpecFn: typeof routingControllersToSpec;
+};
+
 export class TypescriptToOpenApiSpec {
 	/**
-	 * Path to the file containing TypeScript interfaces
+	 * Function to generate combined OpenAPI spec from proxied APIs and Lambda functions
+	 * Handles three scenarios:
+	 * 1. Only proxied APIs
+	 * 2. Only Lambda functions
+	 * 3. Both proxied APIs and Lambda functions
+	 *
+	 * @param openAPIObject Base OpenAPI object with info, version, etc.
+	 * @param pathsToInterfaces Array of schema paths to generate models from
+	 * @param extra
+	 * @returns Merged OpenAPI spec
 	 */
-	private readonly pathToFile: string;
+	static async generate(
+		openAPIObject: OpenAPIObject,
+		pathsToInterfaces: SchemaPath[],
+		extra?: { proxyArgs?: ProxyArgs; additionalSchemas?: Record<string, unknown>; verboseLogging?: boolean }
+	): Promise<OpenAPIObject> {
+		console.log('Starting OpenAPI spec generation...');
 
-	public constructor(pathToFile: string) {
-		this.pathToFile = pathToFile;
+		// Generate schemas from TypeScript interfaces
+		const [namedSchemas, unnamedSchemas] = await Promise.all([
+			TypescriptToOpenApiSpec.generateNamedSchemas(pathsToInterfaces),
+			TypescriptToOpenApiSpec.generateUnnamedSchemas(pathsToInterfaces),
+		]);
+
+		let finalSpec: OpenAPIObject = {
+			...openAPIObject,
+			paths: {},
+			components: {
+				...openAPIObject.components,
+				// @ts-ignore
+				schemas: {
+					...openAPIObject.components?.schemas,
+					...namedSchemas,
+					...unnamedSchemas,
+				},
+			},
+		};
+
+		// Process proxied APIs if available
+		if (extra?.proxyArgs?.storage && extra?.proxyArgs?.app) {
+			extra?.verboseLogging && console.log('Generating spec for proxied APIs...');
+
+			const proxySpec = extra.proxyArgs.routingControllersToSpecFn(extra.proxyArgs.storage, extra.proxyArgs.app, {
+				...openAPIObject,
+				components: {
+					// @ts-ignore
+					schemas: {
+						...extra.proxyArgs.validationMetadatasToSchemasFn({ refPointerPrefix: '#/components/schemas/' }),
+						...namedSchemas,
+						...unnamedSchemas,
+					},
+				},
+			});
+
+			finalSpec = {
+				...finalSpec,
+				...proxySpec,
+				paths: { ...proxySpec.paths },
+				components: {
+					...finalSpec.components,
+					...proxySpec.components,
+					// @ts-ignore
+					schemas: {
+						...finalSpec.components?.schemas,
+						...proxySpec.components?.schemas,
+					},
+				},
+			};
+
+			extra?.verboseLogging &&
+				console.log(`Found ${Object.keys(proxySpec.paths || {}).length} paths from proxied APIs`);
+		} else {
+			extra?.verboseLogging && console.log('No proxied APIs configuration provided, skipping');
+		}
+
+		// Process Lambda functions if they exist
+		let lambdaHandlersRegistered = false;
+
+		try {
+			const functionsDir = join(process.cwd(), 'src/functions');
+
+			const dirExists = await fs
+				.access(functionsDir)
+				.then(() => true)
+				.catch(() => false);
+
+			if (dirExists) {
+				extra?.verboseLogging && console.log('Importing Lambda handlers...');
+
+				const handlers = await fs.readdir(functionsDir, { withFileTypes: true });
+				const handlerDirs = handlers.filter((h) => h.isDirectory());
+
+				extra?.verboseLogging && console.log(`Found ${handlerDirs.length} potential Lambda handler directories`);
+
+				for (const handler of handlerDirs) {
+					try {
+						const handlerPath = `@/src/functions/${handler.name}/index`;
+						extra?.verboseLogging && console.log(`Importing handler: ${handlerPath}`);
+
+						require(handlerPath);
+						lambdaHandlersRegistered = true;
+					} catch (err) {
+						console.error(`Error importing handler ${handler.name}:`, err);
+					}
+				}
+			} else {
+				extra?.verboseLogging && console.log('No Lambda functions directory found at src/functions, skipping');
+			}
+		} catch (error) {
+			console.error('Error processing Lambda functions:', error);
+		}
+
+		// Get registered Lambda handlers and generate their spec
+		if (lambdaHandlersRegistered) {
+			const registeredHandlers = getRegisteredLambdaHandlers();
+			extra?.verboseLogging && console.log(`Found ${registeredHandlers.length} registered Lambda handlers`);
+
+			if (registeredHandlers.length > 0) {
+				const lambdaSpec = generateLambdaOpenAPISpec(registeredHandlers);
+				extra?.verboseLogging &&
+					console.log(`Generated spec for Lambda handlers with ${Object.keys(lambdaSpec.paths || {}).length} paths`);
+
+				// Merge Lambda paths with existing paths
+				const mergedPaths = { ...finalSpec.paths };
+
+				for (const path of Object.keys(lambdaSpec.paths || {})) {
+					if (path in mergedPaths) {
+						// Path exists in both specs, merge the HTTP methods
+						mergedPaths[path] = {
+							...mergedPaths[path],
+							...lambdaSpec.paths[path],
+						};
+						extra?.verboseLogging && console.log(`Merged methods for path: ${path}`);
+					} else {
+						// Path only exists in Lambda spec, add it
+						mergedPaths[path] = lambdaSpec.paths[path];
+						extra?.verboseLogging && console.log(`Added new path from Lambda: ${path}`);
+					}
+				}
+
+				// Update the final spec with merged paths and components
+				finalSpec = {
+					...finalSpec,
+					paths: mergedPaths,
+					components: {
+						...finalSpec.components,
+						schemas: {
+							...(finalSpec.components?.schemas ?? {}),
+							...(lambdaSpec.components?.schemas ?? {}),
+						},
+					},
+				};
+			}
+		} else {
+			extra?.verboseLogging && console.log('No Lambda handlers were registered, skipping Lambda spec generation');
+		}
+
+		if (extra?.additionalSchemas) {
+			finalSpec = {
+				...finalSpec,
+				components: {
+					...finalSpec.components,
+					// @ts-ignore
+					schemas: {
+						...(finalSpec.components?.schemas ?? {}),
+						...(extra.additionalSchemas ?? {}),
+					},
+				},
+			};
+		}
+
+		// Log summary of the generated spec
+		extra?.verboseLogging &&
+			console.log(`OpenAPI spec generation complete with ${Object.keys(finalSpec.paths || {}).length} total paths`);
+
+		// Convert the merged spec to a JSON string
+		return finalSpec;
 	}
 
 	/**
 	 * Generate OpenAPI schemas for all interfaces in a file
 	 * @param paths
 	 */
-	static async generateNamedSchemas(paths: SchemaPath[]): Promise<Record<string, unknown>> {
+	private static async generateNamedSchemas(paths: SchemaPath[]): Promise<Record<string, unknown>> {
 		const results = await Promise.all(
 			// loop over the paths and generate the schema for each interface
 			paths
@@ -76,7 +264,7 @@ export class TypescriptToOpenApiSpec {
 				.filter(({ interfaceName }) => !!interfaceName)
 				// create an array of promises to generate the schema for each interface
 				.map(({ path: modelPath, interfaceName }) =>
-					new TypescriptToOpenApiSpec(join(process.cwd(), modelPath)).generateByName(interfaceName as string)
+					TypescriptToOpenApiSpec.generateByName(modelPath, interfaceName as string)
 				)
 		);
 
@@ -88,14 +276,14 @@ export class TypescriptToOpenApiSpec {
 	 * Generate OpenAPI schemas for all interfaces in a file
 	 * @param paths
 	 */
-	static async generateUnnamedSchemas(paths: SchemaPath[]): Promise<Record<string, unknown>> {
+	private static async generateUnnamedSchemas(paths: SchemaPath[]): Promise<Record<string, unknown>> {
 		const results = await Promise.all(
 			// loop over the paths and generate the schema for each file path
 			paths
 				// we only want to generate every interface in a file if no interfaceName is specified
 				.filter(({ interfaceName }) => !interfaceName)
 				// create an array of promises to generate the schema for all the file contents
-				.map(({ path: modelPath }) => new TypescriptToOpenApiSpec(join(process.cwd(), modelPath)).generateMany())
+				.map(({ path: modelPath }) => TypescriptToOpenApiSpec.generateMany(modelPath))
 		);
 
 		// merge the results into a single object
@@ -105,31 +293,34 @@ export class TypescriptToOpenApiSpec {
 	/**
 	 * Generate many OpenAPI schemas from TypeScript interfaces
 	 */
-	async generateMany(): Promise<OpenAPIObjectSchemaObject> {
-		const definitions = this.extractDefinitions(this.pathToFile);
+	static async generateMany(pathToFile: string): Promise<OpenAPIObjectSchemaObject> {
+		const definitions = TypescriptToOpenApiSpec.extractDefinitions(pathToFile);
 		const schemas = Object.fromEntries(
-			Object.entries(definitions).map(([name, def]) => [name, this.dictToOpenAPI(def)])
+			Object.entries(definitions).map(([name, def]) => [name, TypescriptToOpenApiSpec.dictToOpenAPI(def)])
 		);
-		return this.dereferenceArrays(schemas) as unknown as OpenAPIObjectSchemaObject;
+		return TypescriptToOpenApiSpec.dereferenceArrays(schemas) as unknown as OpenAPIObjectSchemaObject;
 	}
 
 	/**
 	 * Generate a single OpenAPI schema from a TypeScript interface
+	 * @param pathToFile
 	 * @param interfaceName
 	 */
-	async generateByName(interfaceName: string): Promise<OpenAPIObjectSchemaObject> {
-		const definitions = this.extractDefinitions(this.pathToFile, interfaceName);
-		const referencedModels = this.findReferencedModels(
+	static async generateByName(pathToFile: string, interfaceName: string): Promise<OpenAPIObjectSchemaObject> {
+		const definitions = TypescriptToOpenApiSpec.extractDefinitions(pathToFile, interfaceName);
+
+		const referencedModels = TypescriptToOpenApiSpec.findReferencedModels(
 			definitions[interfaceName],
 			definitions,
 			new Set([interfaceName])
 		);
+
 		const schemas = Object.fromEntries(
 			Object.entries(definitions)
-				.map(([name, def]) => [name, this.dictToOpenAPI(def)])
+				.map(([name, def]) => [name, TypescriptToOpenApiSpec.dictToOpenAPI(def)])
 				.filter(([name]) => typeof name === 'string' && referencedModels.has(name))
 		);
-		return this.dereferenceArrays(schemas) as unknown as OpenAPIObjectSchemaObject;
+		return TypescriptToOpenApiSpec.dereferenceArrays(schemas) as unknown as OpenAPIObjectSchemaObject;
 	}
 
 	/**
@@ -143,7 +334,7 @@ export class TypescriptToOpenApiSpec {
 	 * @param referencedModels
 	 * @private
 	 */
-	private findReferencedModels(
+	private static findReferencedModels(
 		schema: SchemaObject,
 		definitions: Record<string, SchemaObject>,
 		referencedModels: Set<string> = new Set()
@@ -170,7 +361,7 @@ export class TypescriptToOpenApiSpec {
 					referencedModels.add(cleanValue);
 
 					if (definitions[cleanValue]) {
-						this.findReferencedModels(definitions[cleanValue], definitions, referencedModels);
+						TypescriptToOpenApiSpec.findReferencedModels(definitions[cleanValue], definitions, referencedModels);
 					}
 				}
 			}
@@ -185,7 +376,7 @@ export class TypescriptToOpenApiSpec {
 	 * @returns {Record<string, SpecificOpenAPISchemaObject>}
 	 * @private
 	 */
-	private dereferenceArrays(
+	private static dereferenceArrays(
 		obj: Record<string, SpecificOpenAPISchemaObject>
 	): Record<string, SpecificOpenAPISchemaObject> {
 		const result: Record<string, SpecificOpenAPISchemaObject> = {};
@@ -204,13 +395,15 @@ export class TypescriptToOpenApiSpec {
 			} else if (value.type === 'object' && value.properties) {
 				result[key] = {
 					...value,
-					properties: this.dereferenceArrays(value.properties as Record<string, SpecificOpenAPISchemaObject>),
+					properties: TypescriptToOpenApiSpec.dereferenceArrays(
+						value.properties as Record<string, SpecificOpenAPISchemaObject>
+					),
 				};
 			} else if (value.type === 'array' && value.items) {
 				result[key] = {
 					...value,
 					// @ts-ignore
-					items: this.dereferenceArrays({ item: value.items }).item,
+					items: TypescriptToOpenApiSpec.dereferenceArrays({ item: value.items }).item,
 				};
 			} else {
 				result[key] = value;
@@ -226,7 +419,7 @@ export class TypescriptToOpenApiSpec {
 	 * @returns {OpenAPIObjectSchemaObject}
 	 * @private
 	 */
-	private dictToOpenAPI(
+	private static dictToOpenAPI(
 		interfaceObj: Record<string, string>
 	): OpenAPIObjectSchemaObject | OpenAPIEnumSchemaObject<unknown> {
 		const properties: Record<string, SchemaObject> = {};
@@ -261,7 +454,7 @@ export class TypescriptToOpenApiSpec {
 				required.push(propertyName);
 			}
 
-			properties[propertyName] = this.typeToSchemaObject(val);
+			properties[propertyName] = TypescriptToOpenApiSpec.typeToSchemaObject(val);
 		}
 
 		return {
@@ -277,11 +470,11 @@ export class TypescriptToOpenApiSpec {
 	 * @returns {SchemaObject | OpenAPIRefSchemaObject}
 	 * @private
 	 */
-	private typeToSchemaObject(value: string | unknown): SchemaObject | OpenAPIRefSchemaObject {
+	private static typeToSchemaObject(value: string | unknown): SchemaObject | OpenAPIRefSchemaObject {
 		if (typeof value === 'string' && value.endsWith('[]')) {
 			return {
 				type: 'array',
-				items: this.typeToSchemaObject(value.slice(0, -2)),
+				items: TypescriptToOpenApiSpec.typeToSchemaObject(value.slice(0, -2)),
 			};
 		}
 
@@ -302,14 +495,14 @@ export class TypescriptToOpenApiSpec {
 	 * @returns {Record<string, Record<string, string>>}
 	 * @private
 	 */
-	private extractDefinitions(filePath: string, interfaceName?: string): Record<string, Record<string, string>> {
+	private static extractDefinitions(filePath: string, interfaceName?: string): Record<string, Record<string, string>> {
 		const program = createProgram([filePath], {});
 		const sourceFile = program.getSourceFile(filePath);
 		const definitions: Record<string, Record<string, string>> = {};
 
 		if (sourceFile) {
 			const typeChecker = program.getTypeChecker();
-			this.visitNode(sourceFile, typeChecker, definitions);
+			TypescriptToOpenApiSpec.visitNode(sourceFile, typeChecker, definitions);
 		}
 
 		if (interfaceName && !definitions[interfaceName]) {
@@ -326,7 +519,7 @@ export class TypescriptToOpenApiSpec {
 	 * @param {Record<string, Record<string, string>>} definition
 	 * @private
 	 */
-	private visitNode(
+	private static visitNode(
 		node: TypescriptNode,
 		typeChecker: TypeChecker,
 		definition: Record<string, Record<string, string | string[]>>
@@ -401,6 +594,119 @@ export class TypescriptToOpenApiSpec {
 			}
 		}
 
-		forEachChild(node, (n) => this.visitNode(n, typeChecker, definition));
+		forEachChild(node, (n) => TypescriptToOpenApiSpec.visitNode(n, typeChecker, definition));
 	}
+}
+
+declare global {
+	interface LambdaHandlerMetadata {
+		name: string;
+		// biome-ignore lint/complexity/noBannedTypes: Needs to be Function
+		constructor: Function;
+		endpoints?: Array<{
+			method: string;
+			path: string;
+			handler: string;
+			options: LambdaAPIOptions;
+		}>;
+	}
+
+	var lambdaHandlers: LambdaHandlerMetadata[];
+}
+
+if (typeof global.lambdaHandlers === 'undefined') {
+	global.lambdaHandlers = [];
+}
+
+export function LambdaAPI(options: LambdaAPIOptions) {
+	// biome-ignore lint/suspicious/noExplicitAny: Needs to be any
+	return (target: any, propertyKey: string, descriptor: PropertyDescriptor) => {
+		// Store metadata on the class for later extraction
+		if (!Reflect.hasMetadata('openapi:endpoints', target.constructor)) {
+			Reflect.defineMetadata('openapi:endpoints', [], target.constructor);
+		}
+
+		const endpoints = Reflect.getMetadata('openapi:endpoints', target.constructor);
+
+		endpoints.push({
+			method: options.method?.toLowerCase(),
+			path: options.path,
+			handler: propertyKey,
+			options,
+		});
+
+		return descriptor;
+	};
+}
+
+/**
+ * Class decorator to register a Lambda handler for OpenAPI generation
+ * This needs to be applied to the handler class
+ */
+
+// biome-ignore lint/suspicious/noExplicitAny: Classes are too Dynamic to predict types / no need to fight typechecker
+export function registerLambdaHandler(target: any) {
+	// Check if the handler is already registered to avoid duplicates
+	if (!global.lambdaHandlers.some((h) => h === target)) {
+		global.lambdaHandlers.push(target);
+	}
+
+	return target;
+}
+
+/**
+ * Generates OpenAPI spec for Lambda handlers
+ */
+function generateLambdaOpenAPISpec(lambdaHandlers: LambdaHandlerMetadata[]): OpenAPIObject {
+	const spec = {
+		paths: {},
+		components: {
+			schemas: {},
+			securitySchemes: {},
+		},
+	} as OpenAPIObject;
+
+	// If no handlers are registered, return empty spec
+	if (lambdaHandlers.length === 0) {
+		return spec;
+	}
+
+	for (const handlerClass of lambdaHandlers) {
+		const endpoints = Reflect.getMetadata('openapi:endpoints', handlerClass as object) || [];
+
+		for (const endpoint of endpoints) {
+			const { method, path, options } = endpoint;
+
+			if (!spec.paths[path]) {
+				spec.paths[path] = {};
+			}
+
+			const pathItem = spec.paths[path] as PathItemObject;
+
+			const operation: OperationObject = {
+				parameters: options.parameters || [],
+				responses: options.responses,
+				summary: options.summary,
+				tags: options.tags,
+				description: options.description,
+				servers: options.servers,
+			};
+
+			// Add request body if present
+			if (options.requestBody) {
+				operation.requestBody = options.requestBody;
+			}
+
+			pathItem[method] = operation;
+		}
+	}
+
+	return spec;
+}
+
+/**
+ * Get the current list of registered Lambda handlers
+ */
+function getRegisteredLambdaHandlers(): LambdaHandlerMetadata[] {
+	return global.lambdaHandlers || [];
 }

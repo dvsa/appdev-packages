@@ -91,7 +91,7 @@ export class ServicePackager {
 		sourcemap: process.argv.includes('--source-map'),
 		logLevel: 'info',
 		platform: 'node',
-		external: ['@koa/*', '@babel/*'],
+		external: ['@koa/*', '@babel/*', 'typescript'],
 		plugins: [esbuildDecorators()],
 	};
 
