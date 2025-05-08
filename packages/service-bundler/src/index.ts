@@ -79,6 +79,14 @@ type ServicePackagerOptions = {
 	 * e.g. `index.ts` / `handler.ts` / `main.ts`
 	 */
 	handlerFileName?: string;
+	/**
+	 * Optional flag to enable or disable optimistic bundling.
+	 * Reason: There are a number of packages in our default stack that are seldom used.
+	 * This option is to remove those dependencies from the build artefact(s).
+	 * Note: If you are experiencing issues with the build, try disabling this option.
+	 * @default true
+	 */
+	optimisticBundling?: boolean;
 };
 
 export class ServicePackager {
@@ -102,12 +110,19 @@ export class ServicePackager {
 	constructor(servicePackagerOptions: ServicePackagerOptions) {
 		// Merge the core build options with the provided options (if any).
 		// This allows for no config to be passed, but also the ability to override.
+
 		Object.assign(ServicePackager.coreBuildOptions, {
 			target: `node${servicePackagerOptions.nodeMajorVersion}`,
 			...(servicePackagerOptions.esbuildOptions || {}),
 			external: [
+				// Exclude any packages request via caller
 				...(servicePackagerOptions.esbuildOptions?.external || []),
+				// Default to exclude packages never required
 				...(ServicePackager.coreBuildOptions.external || []),
+				// "Optimistic" bundling will remove these packages from the build
+				...(servicePackagerOptions.optimisticBundling === false
+					? []
+					: ['libphonenumber-js', 'mime-db', 'iconv-lite', 'mime', 'yaml']),
 			],
 		});
 
