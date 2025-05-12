@@ -122,7 +122,7 @@ export class ServicePackager {
 				// "Optimistic" bundling will remove these packages from the build
 				...(servicePackagerOptions.optimisticBundling === false
 					? []
-					: ['libphonenumber-js', 'mime-db', 'iconv-lite', 'mime', 'yaml']),
+					: ['koa', 'libphonenumber-js', 'mime-db', 'iconv-lite', 'mime', 'yaml']),
 			],
 		});
 
