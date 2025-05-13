@@ -120,17 +120,15 @@ export class ServicePackager {
 				...(ServicePackager.coreBuildOptions.external || []),
 			],
 			// "Optimistic" bundling will remove these packages from the build
-			alias:
-				servicePackagerOptions.optimisticBundling === false
+			alias: {
+				'@dvsa/openapi-schema-generator': '@dvsa/service-bundler/empty-module.js',
+				'routing-controllers-openapi': '@dvsa/service-bundler/empty-module.js',
+				...(servicePackagerOptions.optimisticBundling === false
 					? {}
 					: {
-							'libphonenumber-js/max': '@dvsa/service-bundler/empty-module.js',
-							'@dvsa/openapi-schema-generator': '@dvsa/service-bundler/empty-module.js',
-							'routing-controllers-openapi': '@dvsa/service-bundler/empty-module.js',
 							yaml: '@dvsa/service-bundler/empty-module.js',
-							'iconv-lite': '@dvsa/service-bundler/empty-module.js',
-							'mime-db': '@dvsa/service-bundler/empty-module.js',
-						},
+						}),
+			},
 		});
 
 		// Set the static properties using defaults or provided options
