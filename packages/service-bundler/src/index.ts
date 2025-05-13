@@ -1,5 +1,4 @@
-import { existsSync, readdirSync, writeFileSync } from 'node:fs';
-import { Dirent } from 'node:fs';
+import { Dirent, existsSync, readdirSync, writeFileSync } from 'node:fs';
 import { stat } from 'node:fs/promises';
 import { join } from 'node:path';
 import { type BuildOptions, build } from 'esbuild';
@@ -99,7 +98,7 @@ export class ServicePackager {
 		sourcemap: process.argv.includes('--source-map'),
 		logLevel: 'info',
 		platform: 'node',
-		external: ['@koa/*', '@babel/*', 'typescript'],
+		external: ['@koa/*', '@babel/*'],
 		plugins: [esbuildDecorators()],
 	};
 
@@ -119,11 +118,19 @@ export class ServicePackager {
 				...(servicePackagerOptions.esbuildOptions?.external || []),
 				// Default to exclude packages never required
 				...(ServicePackager.coreBuildOptions.external || []),
-				// "Optimistic" bundling will remove these packages from the build
-				...(servicePackagerOptions.optimisticBundling === false
-					? []
-					: ['koa', 'libphonenumber-js', 'mime-db', 'iconv-lite', 'mime', 'routing-controllers-openapi', 'yaml']),
 			],
+			// "Optimistic" bundling will remove these packages from the build
+			alias:
+				servicePackagerOptions.optimisticBundling === false
+					? {}
+					: {
+							'libphonenumber-js/max': '@dvsa/service-bundler/empty-module.js',
+							'@dvsa/openapi-schema-generator': '@dvsa/service-bundler/empty-module.js',
+							'routing-controllers-openapi': '@dvsa/service-bundler/empty-module.js',
+							yaml: '@dvsa/service-bundler/empty-module.js',
+							'iconv-lite': '@dvsa/service-bundler/empty-module.js',
+							'mime-db': '@dvsa/service-bundler/empty-module.js',
+						},
 		});
 
 		// Set the static properties using defaults or provided options

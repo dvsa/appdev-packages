@@ -1,10 +1,10 @@
 {
   "name": "@dvsa/service-bundler",
-  "version": "1.3.3",
+  "version": "1.3.4",
   "author": "DVSA",
   "license": "ISC",
   "scripts": {
-    "build": "npm run clean && tsup src/index.ts --format esm,cjs --treeshake --dts --minify",
+    "build": "npm run clean && tsup && cp ./src/empty-module.ts ./dist/empty-module.js",
     "clean": "rimraf coverage dist && npm run clean:temp",
     "clean:temp": "rimraf api classes response",
     "gitSecrets": "git secrets --scan . && git log -p -- . | scanrepo",
