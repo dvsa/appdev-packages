@@ -25,6 +25,9 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+  
 jobs:
   orchestrator:
     name: Orchestrator
