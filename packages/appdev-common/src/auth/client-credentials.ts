@@ -24,7 +24,8 @@ export class ClientCredentials {
 		private readonly tokenUrl: string,
 		private readonly clientId: string,
 		private readonly clientSecret: string,
-		private readonly scope: string,
+		private readonly scope: string | undefined,
+		private readonly resource: string | undefined,
 		private readonly debugMode: boolean = false,
 	) {}
 
@@ -64,6 +65,7 @@ export class ClientCredentials {
 				client_id: this.clientId,
 				client_secret: this.clientSecret,
 				scope: this.scope,
+				resource: this.resource,
 			}),
 		});
 
