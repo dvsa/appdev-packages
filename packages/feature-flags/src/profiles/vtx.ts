@@ -40,8 +40,8 @@ const defaultFeatureFlags = {
 		activityReadDDB: true,
 		activityReadAurora: false,
 		activityWriteDDB: true,
-		activityWriteAurora: false
-	}
+		activityWriteAurora: false,
+	},
 };
 
 export type FeatureFlags = typeof defaultFeatureFlags;
