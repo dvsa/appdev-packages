@@ -4,7 +4,7 @@ import { captureAWSv3Client } from 'aws-xray-sdk';
 
 export class Rekognition {
 	private static readonly defaultConfig: Partial<RekognitionClientConfig> = {
-		region: 'eu-west-1',
+		region: process.env.REGION || 'eu-west-1',
 	};
 
 	static getClient(config: Partial<RekognitionClientConfig> = Rekognition.defaultConfig) {

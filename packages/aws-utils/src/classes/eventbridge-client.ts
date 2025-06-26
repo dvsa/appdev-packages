@@ -5,7 +5,7 @@ import { captureAWSv3Client } from 'aws-xray-sdk';
 
 export class Eventbridge {
 	private static readonly defaultConfig: Partial<EventBridgeClientConfig> = {
-		region: 'eu-west-1',
+		region: process.env.REGION || 'eu-west-1',
 	};
 
 	static getClient(config: Partial<EventBridgeClientConfig> = Eventbridge.defaultConfig) {

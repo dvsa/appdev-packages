@@ -10,7 +10,7 @@ import { captureAWSv3Client } from 'aws-xray-sdk';
 
 export class S3Storage {
 	private static readonly defaultConfig: Partial<S3ClientConfig> = {
-		region: 'eu-west-1',
+		region: process.env.REGION || 'eu-west-1',
 	};
 
 	/**

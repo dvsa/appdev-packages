@@ -10,7 +10,7 @@ import { load as loadYaml } from 'js-yaml';
 
 export class SecretsManager {
 	private static readonly defaultConfig: Partial<SecretsManagerClientConfig> = {
-		region: 'eu-west-1',
+		region: process.env.REGION || 'eu-west-1',
 	};
 
 	/**

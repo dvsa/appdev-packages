@@ -20,7 +20,7 @@ export interface SendPayload {
 
 export class SimpleEmailService {
 	private static readonly defaultConfig: Partial<SESClientConfig> = {
-		region: 'eu-west-1',
+		region: process.env.REGION || 'eu-west-1',
 	};
 
 	/**
