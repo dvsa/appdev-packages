@@ -4,7 +4,7 @@ import { captureAWSv3Client } from 'aws-xray-sdk';
 
 export class LambdaInvoke {
 	private static readonly defaultConfig: Partial<LambdaClientConfig> = {
-		region: 'eu-west-1',
+		region: process.env.REGION || 'eu-west-1',
 	};
 
 	/**

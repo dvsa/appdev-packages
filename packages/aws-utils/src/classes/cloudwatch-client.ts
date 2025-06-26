@@ -9,7 +9,7 @@ import { captureAWSv3Client } from 'aws-xray-sdk';
 
 export class CloudWatchClient {
 	private static readonly defaultConfig: Partial<CloudWatchLogsClientConfig> = {
-		region: 'eu-west-1',
+		region: process.env.REGION || 'eu-west-1',
 	};
 
 	static getClient(config: Partial<CloudWatchLogsClientConfig> = CloudWatchClient.defaultConfig) {

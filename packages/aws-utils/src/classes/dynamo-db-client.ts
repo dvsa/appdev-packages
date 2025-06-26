@@ -11,7 +11,7 @@ import { captureAWSv3Client } from 'aws-xray-sdk';
 
 export class DynamoDb {
 	private static readonly defaultConfig: Partial<DynamoDBClientConfig> = {
-		region: 'eu-west-1',
+		region: process.env.REGION || 'eu-west-1',
 	};
 
 	/**
