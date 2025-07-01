@@ -11,6 +11,12 @@ export class HTTPError extends Error {
 
 // biome-ignore lint/complexity/noStaticOnlyClass: makes sense for an HTTP utility to encompass all methods
 export class HTTP {
+	/**
+	 * Performs an HTTP GET request.
+	 * Note: This method will throw an HTTPError if the response is not ok (status code 200-299) to emulate Axios behaviour.
+	 * @param url
+	 * @param options
+	 */
 	static async get(url: string, options?: RequestInit): Promise<Response> {
 		const response = await fetch(url, { method: "GET", ...options });
 
@@ -24,6 +30,13 @@ export class HTTP {
 		return response;
 	}
 
+	/**
+	 * Performs an HTTP POST request.
+	 * Note: This method will throw an HTTPError if the response is not ok (status code 200-299) to emulate Axios behaviour.
+	 * @param url
+	 * @param body
+	 * @param options
+	 */
 	static async post<T>(
 		url: string,
 		body: T,
@@ -46,6 +59,13 @@ export class HTTP {
 		return response;
 	}
 
+	/**
+	 * Performs an HTTP PUT request.
+	 * Note: This method will throw an HTTPError if the response is not ok (status code 200-299) to emulate Axios behaviour.
+	 * @param url
+	 * @param body
+	 * @param options
+	 */
 	static async put<T>(
 		url: string,
 		body: T,
@@ -68,6 +88,12 @@ export class HTTP {
 		return response;
 	}
 
+	/**
+	 * Performs an HTTP DELETE request.
+	 * Note: This method will throw an HTTPError if the response is not ok (status code 200-299) to emulate Axios behaviour.
+	 * @param url
+	 * @param options
+	 */
 	static async delete(url: string, options?: RequestInit): Promise<Response> {
 		const response = await fetch(url, { method: "DELETE", ...options });
 
