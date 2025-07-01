@@ -27,23 +27,23 @@ export function LogDurationWithAccessor<T extends { logger: Logger }>(
 					return result
 						.then((res) => {
 							const duration = (performance.now() - start).toFixed(2);
-							logger.info(`[${labelToUse}] took ${duration}ms`);
+							logger.debug(`[${labelToUse}] took ${duration}ms`);
 							return res;
 						})
 						.catch((err) => {
 							const duration = (performance.now() - start).toFixed(2);
-							logger.error(`[${labelToUse}] failed after ${duration}ms`);
+							logger.debug(`[${labelToUse}] failed after ${duration}ms`);
 							throw err;
 						});
 				}
 
 				// Otherwise, sync method: log and return
 				const duration = (performance.now() - start).toFixed(2);
-				logger.info(`[${labelToUse}] took ${duration}ms`);
+				logger.debug(`[${labelToUse}] took ${duration}ms`);
 				return result;
 			} catch (err) {
 				const duration = (performance.now() - start).toFixed(2);
-				logger.error(`[${labelToUse}] failed after ${duration}ms`);
+				logger.debug(`[${labelToUse}] failed after ${duration}ms`);
 				throw err;
 			}
 		};
