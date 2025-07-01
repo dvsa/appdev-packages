@@ -1,6 +1,6 @@
 {
 	"name": "@dvsa/appdev-api-common",
-	"version": "0.7.0",
+	"version": "0.8.0",
 	"keywords": ["dvsa", "nodejs", "typescript"],
 	"author": "DVSA",
 	"description": "Utils library for common API functionality",
@@ -29,6 +29,7 @@
 		"jose": "^5.9.6"
 	},
 	"devDependencies": {
+		"@aws-lambda-powertools/logger": "^2.22.0",
 		"@biomejs/biome": "1.9.3",
 		"@dvsa/biome-config": "0.3.0",
 		"@types/aws-lambda": "^8.10.145",
