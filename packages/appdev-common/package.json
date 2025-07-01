@@ -32,7 +32,7 @@
 		"@aws-lambda-powertools/logger": "^2.22.0",
 		"@biomejs/biome": "1.9.3",
 		"@dvsa/biome-config": "0.3.0",
-		"@types/aws-lambda": "^8.10.145",
+		"@types/aws-lambda": "^8.10.150",
 		"@types/express": "^5.0.0",
 		"@types/jest": "^29.5.14",
 		"@types/node": "^22.15.16",
