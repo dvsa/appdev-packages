@@ -1,7 +1,22 @@
 import { performance } from "node:perf_hooks";
 import type { Logger } from "@aws-lambda-powertools/logger";
 
-export function LogDurationWithAccessor<T extends { logger: Logger }>(
+/**
+ * Decorator to log the duration of a method execution by passing in an accessor function to retrieve the logger.
+ * @param getLogger - A function that takes the class instance and returns the logger instance.
+ * @param {string} label - Optional label for the log message.
+ *
+ * Note: If you are already using a logger as a class property, you can use the `Timed` decorator instead.
+ *
+ * @constructor
+ *
+ * Example usage:
+ * class MyClass {
+ *  @TimedWithAccessor(() => Container.get(LOGGER))
+ * 	async findAll() {} // The log name here will be [findAll]
+ * }
+ */
+export function TimedWithAccessor<T extends { logger: Logger }>(
 	getLogger: (self: T) => Logger,
 	label?: string,
 ) {
@@ -52,8 +67,28 @@ export function LogDurationWithAccessor<T extends { logger: Logger }>(
 	};
 }
 
+/**
+ * Decorator to log the duration of a method execution.
+ * @param {string} label - Optional label for the log message.
+ *
+ * Note: This decorator can be used on any class method that has a `logger` property.
+ * This method will throw an error if the `logger` property is not found on the class instance.
+ * If you are not using logger as a class property, you can use `LogDurationWithAccessor` instead.
+ * @constructor
+ *
+ * Example usage:
+ * class MyClass {
+ * 	private readonly logger = Container.get(Logger);
+ *
+ * 	@Timed()
+ * 	myMethod() {} // The log name here will be [myMethod]
+ *
+ * 	@Timed('MyClass.myMethod')
+ * 	myMethodWithOptName() {} // The log name here will be [MyClass.myMethod]
+ * }
+ */
 export function Timed<T extends { logger: Logger }>(label?: string) {
-	return LogDurationWithAccessor((cls: T) => {
+	return TimedWithAccessor((cls: T) => {
 		if (!cls.logger) {
 			throw new Error(`[${label}] Logger not found on decorated class.`);
 		}
