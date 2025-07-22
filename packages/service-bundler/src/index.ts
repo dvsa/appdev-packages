@@ -276,7 +276,7 @@ export class ServicePackager {
 	public async build(buildOptions?: CustomBuildOptions) {
 		this.logger('Building service...');
 
-		process.env.BUILD_DATETIME = new Date().toISOString();
+		process.env.BUILD_DATETIME = new Date().toString();
 
 		await this.buildAPIProxy();
 
