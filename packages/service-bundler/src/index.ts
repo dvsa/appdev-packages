@@ -28,7 +28,7 @@ type CustomBuildOptions = {
 type ProxyDetails = {
 	/**
 	 * The name of the service. This will be the prefix for the produced the zip file name.
-	 * Defaults to `service`
+	 * Defaulting to `service`
 	 */
 	name: string;
 	/**
@@ -45,7 +45,7 @@ type CopyFilesOptions = {
 
 type Config = {
 	/**
-	 * The directory to output the build artifacts to
+	 * The directory to output the build artefacts to
 	 * Defaults to `/artifacts`
 	 */
 	artifactOutputDir: string;
@@ -146,14 +146,6 @@ export class ServicePackager {
 	}
 
 	/**
-	 * Internal logger
-	 * @param {string} msg
-	 * @param {LogColour} colour
-	 */
-	private logger = (msg: string, colour: LogColour = LogColour.Cyan) =>
-		console.log(`\x1b[${colour}m%s\x1b[0m`, `\n${msg}`);
-
-	/**
 	 * Copy any non-transpiled i.e. TS files into the build output
 	 * @param {CopyFilesOptions} opts
 	 * @param {Config} config
@@ -197,6 +189,12 @@ export class ServicePackager {
 			entryPoints: ['src/proxy/index.ts'],
 			outfile: `${outdir}/index.js`,
 			...ServicePackager.coreBuildOptions,
+
+			// Bind a "BUILD_DATETIME" to the build output (useful for version endpoints)
+			define: {
+				'process.env.BUILD_DATETIME': JSON.stringify(process.env.BUILD_DATETIME),
+				...(ServicePackager.coreBuildOptions.define ?? {}),
+			},
 		});
 
 		// If metafile was requested & generated, save it to a file
@@ -229,32 +227,44 @@ export class ServicePackager {
 			.map((dirent) => dirent.name);
 
 		// Bundle each folder within functions
-		for (const dir of directories) {
-			const entryPoint = join(functionsDir, dir, ServicePackager.handlerFileName);
-			const outdir = join(process.cwd(), ServicePackager.config.buildOutputDir, 'functions', dir);
+		await Promise.all(
+			directories.map(async (dir) => {
+				const entryPoint = join(functionsDir, dir, ServicePackager.handlerFileName);
+				const outdir = join(process.cwd(), ServicePackager.config.buildOutputDir, 'functions', dir);
 
-			const result = await build({
-				entryPoints: [{ in: entryPoint, out: 'index' }],
-				outdir,
-				...ServicePackager.coreBuildOptions,
+				this.logger('Starting build...', LogColour.Cyan, dir);
 
-				// exclude the packages needed for the API proxying
-				external: [
-					'cors',
-					'express',
-					'routing-controllers',
-					'serverless-http',
-					...(ServicePackager.coreBuildOptions.external || []),
-				],
-			});
+				const result = await build({
+					entryPoints: [{ in: entryPoint, out: 'index' }],
+					outdir,
+					...ServicePackager.coreBuildOptions,
 
-			// If metafile was requested & generated, save it to a file
-			if (result.metafile) {
-				const metafilePath = join(outdir, 'metafile.json');
-				writeFileSync(metafilePath, JSON.stringify(result.metafile, null, 2), 'utf-8');
-				this.logger(`Metafile saved to ${metafilePath}`, LogColour.Green);
-			}
-		}
+					// exclude the packages needed for the API proxying
+					external: [
+						'cors',
+						'express',
+						'routing-controllers',
+						'serverless-http',
+						...(ServicePackager.coreBuildOptions.external || []),
+					],
+
+					// Bind a "BUILD_DATETIME" to the build output (useful for version endpoints)
+					define: {
+						'process.env.BUILD_DATETIME': JSON.stringify(process.env.BUILD_DATETIME),
+						...(ServicePackager.coreBuildOptions.define ?? {}),
+					},
+				});
+
+				// If metafile was requested & generated, save it to a file
+				if (result.metafile) {
+					const metafilePath = join(outdir, 'metafile.json');
+					writeFileSync(metafilePath, JSON.stringify(result.metafile, null, 2), 'utf-8');
+					this.logger(`Metafile saved to ${metafilePath}`, LogColour.Green, dir);
+				}
+
+				this.logger('Build complete.', LogColour.Green, dir);
+			})
+		);
 
 		this.logger('Function build(s) completed.', LogColour.Green);
 	}
@@ -265,6 +275,8 @@ export class ServicePackager {
 	 */
 	public async build(buildOptions?: CustomBuildOptions) {
 		this.logger('Building service...');
+
+		process.env.BUILD_DATETIME = new Date().toISOString();
 
 		await this.buildAPIProxy();
 
@@ -304,21 +316,23 @@ export class ServicePackager {
 
 		const { name, version } = ServicePackager.proxyDetails;
 
-		for (const fn of fns) {
-			this.logger(`Zipping "${fn.name}"...`, LogColour.Yellow);
+		await Promise.all(
+			fns.map(async (fn) => {
+				this.logger('Zipping...', LogColour.Yellow, fn.name);
 
-			const fnArtifactName = process.env.ZIP_NAME
-				? `${process.env.ZIP_NAME}-${fn.name}-${version}-${timestamp}`
-				: `${fn.name}-${version}-${timestamp}`;
+				const fnArtifactName = process.env.ZIP_NAME
+					? `${process.env.ZIP_NAME}-${fn.name}-${version}-${timestamp}`
+					: `${fn.name}-${version}-${timestamp}`;
 
-			const zipFile = `${ServicePackager.config.artifactOutputDir}/${fnArtifactName}.zip`;
+				const zipFile = `${ServicePackager.config.artifactOutputDir}/${fnArtifactName}.zip`;
 
-			await archiveFolder(`${functionBundlesDir}/${fn.name}`, zipFile);
+				await archiveFolder(`${functionBundlesDir}/${fn.name}`, zipFile);
 
-			const { size } = await stat(zipFile);
+				const { size } = await stat(zipFile);
 
-			this.logger(`"${fn.name}" zipped successfully. ~ Size: ${this.bytesToSize(size)}.`, LogColour.Green);
-		}
+				this.logger(`Zipped successfully. ~ Size: ${this.bytesToSize(size)}`, LogColour.Green, fn.name);
+			})
+		);
 
 		const proxyBundleDir = join(process.cwd(), ServicePackager.config.buildOutputDir, 'src', 'proxy');
 
@@ -346,16 +360,16 @@ export class ServicePackager {
 	}
 
 	/**
-	 * Calculate the size of an artifact, in the most appropriate unit
+	 * Calculate the size of an artefact in the most appropriate unit
 	 * @param {number} bytes - number of bytes
 	 * @private
 	 */
 	private bytesToSize(bytes: number): string {
-		const sizes: string[] = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-
 		if (bytes === 0) {
 			return 'n/a';
 		}
+
+		const sizes: string[] = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
 
 		const i: number = Number.parseInt(Math.floor(Math.log(bytes) / Math.log(1024)).toString());
 
@@ -365,4 +379,15 @@ export class ServicePackager {
 
 		return `${(bytes / 1024 ** i).toFixed(1)} ${sizes[i]}`;
 	}
+
+	/**
+	 * Internal logger
+	 * @param {string} msg
+	 * @param {LogColour} colour
+	 * @param context
+	 */
+	private logger = (msg: string, colour: LogColour = LogColour.Cyan, context?: string) => {
+		const prefix = context ? `[${context}] ` : '';
+		console.log(`\x1b[${colour}m%s\x1b[0m`, `\n${prefix}${msg}`);
+	};
 }
