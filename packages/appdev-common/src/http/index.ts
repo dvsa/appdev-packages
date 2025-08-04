@@ -3,7 +3,7 @@ type HTTPErrorResponse = Partial<Omit<Response, "body"> & { body: unknown }>;
 export class HTTPError extends Error {
 	constructor(
 		message: string,
-		public response: Partial<Omit<Response, "body"> & { body: unknown }>,
+		public response: HTTPErrorResponse,
 	) {
 		super(message);
 		this.name = "HTTPError";
