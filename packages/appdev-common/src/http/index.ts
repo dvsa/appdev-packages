@@ -1,7 +1,7 @@
 export class HTTPError extends Error {
 	constructor(
 		message: string,
-		public response: Response,
+		public response: Partial<Response & { body?: unknown }>,
 	) {
 		super(message);
 		this.name = "HTTPError";
@@ -23,7 +23,9 @@ export class HTTP {
 		if (!response.ok) {
 			throw new HTTPError(
 				`HTTP GET request failed with status ${response.status}`,
-				response,
+				{ ...response, body: await response.json() } as Partial<
+					Response & { body?: unknown }
+				>,
 			);
 		}
 
@@ -52,7 +54,9 @@ export class HTTP {
 		if (!response.ok) {
 			throw new HTTPError(
 				`HTTP POST request failed with status ${response.status}`,
-				response,
+				{ ...response, body: await response.json() } as Partial<
+					Response & { body?: unknown }
+				>,
 			);
 		}
 
@@ -81,7 +85,9 @@ export class HTTP {
 		if (!response.ok) {
 			throw new HTTPError(
 				`HTTP PUT request failed with status ${response.status}`,
-				response,
+				{ ...response, body: await response.json() } as Partial<
+					Response & { body?: unknown }
+				>,
 			);
 		}
 
@@ -100,7 +106,9 @@ export class HTTP {
 		if (!response.ok) {
 			throw new HTTPError(
 				`HTTP DELETE request failed with status ${response.status}`,
-				response,
+				{ ...response, body: await response.json() } as Partial<
+					Response & { body?: unknown }
+				>,
 			);
 		}
 
