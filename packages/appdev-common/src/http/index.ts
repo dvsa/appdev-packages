@@ -1,7 +1,9 @@
+type HTTPErrorResponse = Partial<Omit<Response, "body"> & { body: unknown }>;
+
 export class HTTPError extends Error {
 	constructor(
 		message: string,
-		public response: Response,
+		public response: HTTPErrorResponse,
 	) {
 		super(message);
 		this.name = "HTTPError";
@@ -23,7 +25,10 @@ export class HTTP {
 		if (!response.ok) {
 			throw new HTTPError(
 				`HTTP GET request failed with status ${response.status}`,
-				response,
+				{
+					...response,
+					body: await response.json(),
+				} satisfies HTTPErrorResponse,
 			);
 		}
 
@@ -52,7 +57,10 @@ export class HTTP {
 		if (!response.ok) {
 			throw new HTTPError(
 				`HTTP POST request failed with status ${response.status}`,
-				response,
+				{
+					...response,
+					body: await response.json(),
+				} satisfies HTTPErrorResponse,
 			);
 		}
 
@@ -81,7 +89,10 @@ export class HTTP {
 		if (!response.ok) {
 			throw new HTTPError(
 				`HTTP PUT request failed with status ${response.status}`,
-				response,
+				{
+					...response,
+					body: await response.json(),
+				} satisfies HTTPErrorResponse,
 			);
 		}
 
@@ -100,7 +111,10 @@ export class HTTP {
 		if (!response.ok) {
 			throw new HTTPError(
 				`HTTP DELETE request failed with status ${response.status}`,
-				response,
+				{
+					...response,
+					body: await response.json(),
+				} satisfies HTTPErrorResponse,
 			);
 		}
 
