@@ -4,7 +4,7 @@ type HTTPResponse = {
 	statusText: string;
 	headers: Record<string, string>;
 	redirected: boolean;
-	type: 'basic' | 'cors' | 'default' | 'error' | 'opaque' | 'opaqueredirect';
+	type: "basic" | "cors" | "default" | "error" | "opaque" | "opaqueredirect";
 	body?: unknown;
 };
 
@@ -33,7 +33,10 @@ export class HTTP {
 		const serialisedResponse = await HTTP.serialise(response);
 
 		if (!response.ok) {
-			throw new HTTPError(`HTTP GET request failed with status ${response.status}`, serialisedResponse);
+			throw new HTTPError(
+				`HTTP GET request failed with status ${response.status}`,
+				serialisedResponse,
+			);
 		}
 
 		return serialisedResponse;
@@ -61,7 +64,10 @@ export class HTTP {
 		const serialisedResponse = await HTTP.serialise(response);
 
 		if (!response.ok) {
-			throw new HTTPError(`HTTP POST request failed with status ${response.status}`, serialisedResponse);
+			throw new HTTPError(
+				`HTTP POST request failed with status ${response.status}`,
+				serialisedResponse,
+			);
 		}
 
 		return serialisedResponse;
@@ -89,7 +95,10 @@ export class HTTP {
 		const serialisedResponse = await HTTP.serialise(response);
 
 		if (!response.ok) {
-			throw new HTTPError(`HTTP PUT request failed with status ${response.status}`, serialisedResponse);
+			throw new HTTPError(
+				`HTTP PUT request failed with status ${response.status}`,
+				serialisedResponse,
+			);
 		}
 
 		return serialisedResponse;
@@ -101,13 +110,19 @@ export class HTTP {
 	 * @param url
 	 * @param options
 	 */
-	static async delete(url: string, options?: RequestInit): Promise<HTTPResponse> {
+	static async delete(
+		url: string,
+		options?: RequestInit,
+	): Promise<HTTPResponse> {
 		const response = await fetch(url, { method: "DELETE", ...options });
 
 		const serialisedResponse = await HTTP.serialise(response);
 
 		if (!response.ok) {
-			throw new HTTPError(`HTTP DELETE request failed with status ${response.status}`, serialisedResponse);
+			throw new HTTPError(
+				`HTTP DELETE request failed with status ${response.status}`,
+				serialisedResponse,
+			);
 		}
 
 		return serialisedResponse;
