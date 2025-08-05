@@ -1,9 +1,17 @@
-type HTTPErrorResponse = Partial<Omit<Response, "body"> & { body: unknown }>;
+type HTTPResponse = {
+	url: string;
+	status: number;
+	statusText: string;
+	headers: Record<string, string>;
+	redirected: boolean;
+	type: "basic" | "cors" | "default" | "error" | "opaque" | "opaqueredirect";
+	body?: unknown;
+};
 
 export class HTTPError extends Error {
 	constructor(
 		message: string,
-		public response: HTTPErrorResponse,
+		public response: HTTPResponse,
 	) {
 		super(message);
 		this.name = "HTTPError";
@@ -19,20 +27,19 @@ export class HTTP {
 	 * @param url
 	 * @param options
 	 */
-	static async get(url: string, options?: RequestInit): Promise<Response> {
+	static async get(url: string, options?: RequestInit): Promise<HTTPResponse> {
 		const response = await fetch(url, { method: "GET", ...options });
+
+		const serialisedResponse = await HTTP.serialise(response);
 
 		if (!response.ok) {
 			throw new HTTPError(
 				`HTTP GET request failed with status ${response.status}`,
-				{
-					...response,
-					body: await response.json(),
-				} satisfies HTTPErrorResponse,
+				serialisedResponse,
 			);
 		}
 
-		return response;
+		return serialisedResponse;
 	}
 
 	/**
@@ -46,7 +53,7 @@ export class HTTP {
 		url: string,
 		body: T,
 		options?: RequestInit,
-	): Promise<Response> {
+	): Promise<HTTPResponse> {
 		const response = await fetch(url, {
 			method: "POST",
 			headers: { "Content-Type": "application/json", ...options?.headers },
@@ -54,17 +61,16 @@ export class HTTP {
 			...options,
 		});
 
+		const serialisedResponse = await HTTP.serialise(response);
+
 		if (!response.ok) {
 			throw new HTTPError(
 				`HTTP POST request failed with status ${response.status}`,
-				{
-					...response,
-					body: await response.json(),
-				} satisfies HTTPErrorResponse,
+				serialisedResponse,
 			);
 		}
 
-		return response;
+		return serialisedResponse;
 	}
 
 	/**
@@ -78,7 +84,7 @@ export class HTTP {
 		url: string,
 		body: T,
 		options?: RequestInit,
-	): Promise<Response> {
+	): Promise<HTTPResponse> {
 		const response = await fetch(url, {
 			method: "PUT",
 			headers: { "Content-Type": "application/json", ...options?.headers },
@@ -86,17 +92,16 @@ export class HTTP {
 			...options,
 		});
 
+		const serialisedResponse = await HTTP.serialise(response);
+
 		if (!response.ok) {
 			throw new HTTPError(
 				`HTTP PUT request failed with status ${response.status}`,
-				{
-					...response,
-					body: await response.json(),
-				} satisfies HTTPErrorResponse,
+				serialisedResponse,
 			);
 		}
 
-		return response;
+		return serialisedResponse;
 	}
 
 	/**
@@ -105,19 +110,47 @@ export class HTTP {
 	 * @param url
 	 * @param options
 	 */
-	static async delete(url: string, options?: RequestInit): Promise<Response> {
+	static async delete(
+		url: string,
+		options?: RequestInit,
+	): Promise<HTTPResponse> {
 		const response = await fetch(url, { method: "DELETE", ...options });
+
+		const serialisedResponse = await HTTP.serialise(response);
 
 		if (!response.ok) {
 			throw new HTTPError(
 				`HTTP DELETE request failed with status ${response.status}`,
-				{
-					...response,
-					body: await response.json(),
-				} satisfies HTTPErrorResponse,
+				serialisedResponse,
 			);
 		}
 
-		return response;
+		return serialisedResponse;
+	}
+
+	private static async serialise(response: Response): Promise<HTTPResponse> {
+		let body: unknown;
+
+		try {
+			// Clone the response so we don't consume the original body
+			body = await response.clone().json();
+		} catch {
+			// If JSON parsing fails, try text
+			try {
+				body = await response.clone().text();
+			} catch {
+				body = null;
+			}
+		}
+
+		return {
+			url: response.url,
+			status: response.status,
+			statusText: response.statusText,
+			headers: Object.fromEntries(response.headers.entries()),
+			redirected: response.redirected,
+			type: response.type,
+			body,
+		};
 	}
 }
