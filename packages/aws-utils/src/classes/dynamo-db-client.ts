@@ -7,6 +7,7 @@ import {
 	ScanCommand,
 	type ScanCommandInput,
 } from '@aws-sdk/lib-dynamodb';
+import { TranslateConfig } from '@aws-sdk/lib-dynamodb/dist-types/DynamoDBDocumentClient';
 import { captureAWSv3Client } from 'aws-xray-sdk';
 
 export class DynamoDb {
@@ -20,9 +21,13 @@ export class DynamoDb {
 	 * - If `process.env.IS_OFFLINE` is `true`, credentials will be used from .env / serverless.yml file
 	 * - If `process.env.IS_OFFLINE` is `true`, ensure the `DDB_OFFLINE_ENDPOINT` env var is set to the local DynamoDB endpoint
 	 * @param {Partial<DynamoDBClientConfig>} clientConfig
+	 * @param translateConfig
 	 * @returns {DynamoDBClient}
 	 */
-	static getClient(clientConfig: Partial<DynamoDBClientConfig> = DynamoDb.defaultConfig): DynamoDBDocumentClient {
+	static getClient(
+		clientConfig: Partial<DynamoDBClientConfig> = DynamoDb.defaultConfig,
+		translateConfig?: TranslateConfig
+	): DynamoDBDocumentClient {
 		if (process.env.USE_CREDENTIALS === 'true') {
 			clientConfig.credentials = fromIni();
 
@@ -37,7 +42,7 @@ export class DynamoDb {
 		// If tracing is enabled, then capture the client with AWS X-Ray
 		const dynamoDBClient = process.env._X_AMZN_TRACE_ID ? captureAWSv3Client(client) : client;
 
-		return DynamoDBDocumentClient.from(dynamoDBClient);
+		return DynamoDBDocumentClient.from(dynamoDBClient, translateConfig);
 	}
 
 	/**
