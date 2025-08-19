@@ -28,19 +28,9 @@ const defaultFeatureFlags = {
 	testFacilityDB: {
 		enabled: true,
 
-		// these flags control the /test-station/{+proxy}
-		testStationReadDDB: true,
-		testStationReadAurora: false,
-
-		// the only write that occurs in "test stations" are via the put-test-station, therefore no need for distinct flags
-		testStationWriteDDB: true,
-		testStationWriteAurora: false,
-
-		// these flags control the /activities/{+proxy}
-		activityReadDDB: true,
-		activityReadAurora: false,
-		activityWriteDDB: true,
-		activityWriteAurora: false,
+		// Feature flags for the test facility read/write operations
+		readAurora: false,
+		writeAurora: false,
 	},
 };
 
