@@ -26,7 +26,7 @@
 		"ajv": "^8.17.1",
 		"ajv-formats": "^3.0.1",
 		"dayjs": "^1.11.13",
-		"jose": "^5.9.6"
+		"jose": "^6.0.13"
 	},
 	"devDependencies": {
 		"@aws-lambda-powertools/logger": "^2.22.0",
