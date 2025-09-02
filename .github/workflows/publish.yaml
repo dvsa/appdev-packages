@@ -44,7 +44,7 @@ jobs:
       publish-business-events: ${{ steps.changed-business-events.outputs.any_changed == 'true' || null }}
     steps:
       - name: 📨 Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -117,7 +117,7 @@ jobs:
     if: ${{ needs.orchestrator.outputs.publish-cvs-common || github.event_name == 'workflow_dispatch' && inputs.package == 'cvs-common'}}
     steps:
       - name: 📨 Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Publish package "packages/cvs-common" ${{ inputs.dry-run && 'in' || 'not in' }} dry run mode
         uses: ./.github/actions/publish-package
@@ -132,7 +132,7 @@ jobs:
     if: ${{ needs.orchestrator.outputs.publish-appdev-common || github.event_name == 'workflow_dispatch' && inputs.package == 'appdev-common'}}
     steps:
       - name: 📨 Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Publish package "packages/appdev-common" ${{ inputs.dry-run && 'in' || 'not in' }} dry run mode
         uses: ./.github/actions/publish-package
@@ -147,7 +147,7 @@ jobs:
     if: ${{ needs.orchestrator.outputs.publish-feature-flags || github.event_name == 'workflow_dispatch' && inputs.package == 'feature-flags' }}
     steps:
       - name: 📨 Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Publish package "packages/feature-flags" ${{ inputs.dry-run && 'in' || 'not in' }} dry run mode
         uses: ./.github/actions/publish-package
@@ -162,7 +162,7 @@ jobs:
     if: ${{ needs.orchestrator.outputs.publish-service-bundler || github.event_name == 'workflow_dispatch' && inputs.package == 'service-bundler' }}
     steps:
       - name: 📨 Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Publish package "packages/service-bundler" ${{ inputs.dry-run && 'in' || 'not in' }} dry run mode
         uses: ./.github/actions/publish-package
@@ -177,7 +177,7 @@ jobs:
     if: ${{ needs.orchestrator.outputs.publish-aws-utils || github.event_name == 'workflow_dispatch' && inputs.package == 'aws-utils' }}
     steps:
       - name: 📨 Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Publish package "packages/aws-utils" ${{ inputs.dry-run && 'in' || 'not in' }} dry run mode
         uses: ./.github/actions/publish-package
@@ -192,7 +192,7 @@ jobs:
     if: ${{ needs.orchestrator.outputs.publish-database-operations || github.event_name == 'workflow_dispatch' && inputs.package == 'database' }}
     steps:
       - name: 📨 Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Publish package "packages/database" ${{ inputs.dry-run && 'in' || 'not in' }} dry run mode
         uses: ./.github/actions/publish-package
@@ -207,7 +207,7 @@ jobs:
     if: ${{ needs.orchestrator.outputs.publish-biome-config || github.event_name == 'workflow_dispatch' && inputs.package == 'biome-config' }}
     steps:
       - name: 📨 Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Publish package "packages/biome-config" ${{ inputs.dry-run && 'in' || 'not in' }} dry run mode
         uses: ./.github/actions/publish-package
@@ -222,7 +222,7 @@ jobs:
     if: ${{ needs.orchestrator.outputs.publish-business-events || github.event_name == 'workflow_dispatch' && inputs.package == 'business-events' }}
     steps:
       - name: 📨 Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Publish package "packages/business-events" ${{ inputs.dry-run && 'in' || 'not in' }} dry run mode
         uses: ./.github/actions/publish-package
@@ -237,7 +237,7 @@ jobs:
     if: ${{ needs.orchestrator.outputs.publish-openapi-schema-gen || github.event_name == 'workflow_dispatch' && inputs.package == 'openapi-schema-gen' }}
     steps:
       - name: 📨 Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Publish package "packages/openapi-schema-generator" ${{ inputs.dry-run && 'in' || 'not in' }} dry run mode
         uses: ./.github/actions/publish-package
