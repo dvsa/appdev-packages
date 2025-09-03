@@ -1,8 +1,7 @@
-import { Dirent, existsSync, readdirSync, writeFileSync } from 'node:fs';
+import { type Dirent, existsSync, readdirSync } from 'node:fs';
 import { stat } from 'node:fs/promises';
-import { join } from 'node:path';
-import { type BuildOptions, build } from 'esbuild';
-import { esbuildDecorators } from 'esbuild-plugin-typescript-decorators';
+import { join, resolve } from 'node:path';
+import { DefinePlugin, type RspackOptions, Stats, rspack } from '@rspack/core';
 import { copy } from 'fs-extra';
 import { archiveFolder } from 'zip-lib';
 
@@ -58,7 +57,7 @@ type Config = {
 
 type ServicePackagerOptions = {
 	/**
-	 * Required by `esbuild` to determine the target node version.
+	 * Required to determine the target node version.
 	 */
 	nodeMajorVersion: string;
 	/**
@@ -66,9 +65,9 @@ type ServicePackagerOptions = {
 	 */
 	proxy?: ProxyDetails;
 	/**
-	 * Optional esbuild options to override the core build options.
+	 * Optional Rspack options to override the core build options.
 	 */
-	esbuildOptions?: BuildOptions;
+	rspackOptions?: RspackOptions;
 	/**
 	 * Optional configuration options.
 	 */
@@ -92,26 +91,55 @@ export class ServicePackager {
 	private static handlerFileName: string;
 	private static proxyDetails: ProxyDetails;
 	private static config: Config;
-	private static readonly coreBuildOptions: BuildOptions = {
-		bundle: true,
-		minify: true,
-		sourcemap: process.argv.includes('--source-map'),
-		logLevel: 'info',
-		platform: 'node',
-		external: ['@koa/*', '@babel/*'],
-		plugins: [
-			esbuildDecorators(),
+	private static readonly coreBuildOptions: RspackOptions = {
+		mode: 'production',
+		optimization: {
+			minimize: true,
+		},
+		ignoreWarnings: [
 			{
-				// load native "node" modules i.e. files that end in .node
-				name: 'node-loader',
-				setup(build) {
-					build.onLoad({ filter: /\.node$/ }, (args) => ({
-						contents: `module.exports = require(${JSON.stringify(args.path)})`,
-						loader: 'js',
-					}));
-				},
+				module: /routing-controllers/,
 			},
 		],
+		devtool: process.argv.includes('--source-map') ? 'source-map' : false,
+		externalsType: 'commonjs',
+		externals: ['@koa/cors', '@babel/core', /^@koa\//, /^@babel\//],
+		module: {
+			rules: [
+				{
+					test: /\.tsx?$/,
+					use: {
+						loader: 'builtin:swc-loader',
+						options: {
+							jsc: {
+								parser: {
+									syntax: 'typescript',
+									decorators: true,
+									dynamicImport: true,
+								},
+								transform: {
+									legacyDecorator: true,
+									decoratorMetadata: true,
+								},
+								target: 'es2024', // Direct target, no env needed for Node.js
+							},
+							module: {
+								type: 'commonjs',
+							},
+						},
+					},
+				},
+			],
+		},
+		plugins: [
+			new DefinePlugin({
+				'process.env.BUILD_DATETIME': JSON.stringify(new Date().toString()),
+			}),
+		],
+		resolve: {
+			tsConfig: resolve(process.cwd(), 'tsconfig.json'),
+			extensions: ['.ts', '.tsx', '.js', '.jsx'],
+		},
 	};
 
 	/**
@@ -120,28 +148,34 @@ export class ServicePackager {
 	 */
 	constructor(servicePackagerOptions: ServicePackagerOptions) {
 		// Merge the core build options with the provided options (if any).
-		// This allows for no config to be passed, but also the ability to override.
-
 		Object.assign(ServicePackager.coreBuildOptions, {
 			target: `node${servicePackagerOptions.nodeMajorVersion}`,
-			...(servicePackagerOptions.esbuildOptions || {}),
-			external: [
+			...(servicePackagerOptions.rspackOptions || {}),
+			externalsType: 'commonjs',
+			externals: [
 				// Exclude any packages request via caller
-				...(servicePackagerOptions.esbuildOptions?.external || []),
+				...(Array.isArray(servicePackagerOptions.rspackOptions?.externals)
+					? servicePackagerOptions.rspackOptions.externals
+					: []),
 				// Default to exclude packages never required
-				...(ServicePackager.coreBuildOptions.external || []),
+				...(Array.isArray(ServicePackager.coreBuildOptions.externals)
+					? ServicePackager.coreBuildOptions.externals
+					: []),
 			],
-			// "Optimistic" bundling will remove these packages from the build
-			alias: {
-				'@dvsa/openapi-schema-generator': '@dvsa/service-bundler/empty-module.js',
-				'routing-controllers-openapi': '@dvsa/service-bundler/empty-module.js',
-				...(servicePackagerOptions.optimisticBundling === false
-					? {}
-					: {
-							yaml: '@dvsa/service-bundler/empty-module.js',
-						}),
-			},
 		});
+
+		// "Optimistic" bundling - replace packages with empty modules
+		if (servicePackagerOptions.optimisticBundling !== false) {
+			ServicePackager.coreBuildOptions.resolve = {
+				...ServicePackager.coreBuildOptions.resolve,
+				alias: {
+					'@dvsa/openapi-schema-generator': '@dvsa/service-bundler/empty-module.js',
+					'routing-controllers-openapi': '@dvsa/service-bundler/empty-module.js',
+					yaml: '@dvsa/service-bundler/empty-module.js',
+					...(ServicePackager.coreBuildOptions.resolve?.alias || {}),
+				},
+			};
+		}
 
 		// Set the static properties using defaults or provided options
 		ServicePackager.proxyDetails = servicePackagerOptions.proxy || {
@@ -181,12 +215,41 @@ export class ServicePackager {
 	}
 
 	/**
-	 * Build the API proxy using `esbuild`
+	 * Build using Rspack
+	 * @param {RspackOptions} options
+	 * @private
+	 */
+	private static build(options: RspackOptions): Promise<Stats | undefined> {
+		return new Promise((resolve, reject) => {
+			rspack(options, (err, stats) => {
+				if (err) {
+					reject(err);
+				} else if (stats?.hasErrors()) {
+					const errors = stats.toString('errors-only');
+					reject(new Error(errors));
+				} else {
+					if (stats) {
+						console.log(
+							stats.toString({
+								colors: true,
+								modules: false,
+								children: false,
+								chunks: false,
+								chunkModules: false,
+							})
+						);
+					}
+					resolve(stats);
+				}
+			});
+		});
+	}
+
+	/**
+	 * Build the API proxy using Rspack
 	 * @private
 	 */
 	private async buildAPIProxy() {
-		this.logger('Starting API proxy build.');
-
 		const proxyDir = join(process.cwd(), 'src', 'proxy');
 
 		// Check if the proxy directory exists
@@ -197,35 +260,25 @@ export class ServicePackager {
 
 		const outdir = `${ServicePackager.config.buildOutputDir}/src/proxy`;
 
-		const result = await build({
-			entryPoints: ['src/proxy/index.ts'],
-			outfile: `${outdir}/index.js`,
-			...ServicePackager.coreBuildOptions,
-
-			// Bind a "BUILD_DATETIME" to the build output (useful for version endpoints)
-			define: {
-				'process.env.BUILD_DATETIME': JSON.stringify(process.env.BUILD_DATETIME),
-				...(ServicePackager.coreBuildOptions.define ?? {}),
+		await ServicePackager.build({
+			name: ServicePackager.proxyDetails.name,
+			entry: { index: `${proxyDir}/index.ts` },
+			output: {
+				path: join(process.cwd(), outdir),
+				filename: '[name].js',
+				library: {
+					type: 'commonjs2',
+				},
 			},
+			...ServicePackager.coreBuildOptions,
 		});
-
-		// If metafile was requested & generated, save it to a file
-		if (result.metafile) {
-			const metafilePath = join(process.cwd(), outdir, 'metafile.json');
-			writeFileSync(metafilePath, JSON.stringify(result.metafile, null, 2), 'utf-8');
-			this.logger(`Metafile saved to ${metafilePath}`, LogColour.Green);
-		}
-
-		this.logger('API proxy built complete.', LogColour.Green);
 	}
 
 	/**
-	 * Build the lambda functions using `esbuild`
+	 * Build the lambda functions using Rspack
 	 * @private
 	 */
 	private async buildFunctions() {
-		this.logger('Starting functions build(s).');
-
 		const functionsDir = join(process.cwd(), 'src', 'functions');
 
 		// Check if the functions directory exists
@@ -246,39 +299,32 @@ export class ServicePackager {
 
 				this.logger('Starting build...', LogColour.Cyan, dir);
 
-				const result = await build({
-					entryPoints: [{ in: entryPoint, out: 'index' }],
-					outdir,
+				await ServicePackager.build({
+					name: dir,
+					entry: { index: entryPoint },
+					output: {
+						path: outdir,
+						filename: '[name].js',
+						library: {
+							type: 'commonjs2',
+						},
+					},
 					...ServicePackager.coreBuildOptions,
 
 					// exclude the packages needed for the API proxying
-					external: [
+					externalsType: 'commonjs',
+					externals: [
 						'cors',
 						'express',
 						'routing-controllers',
 						'serverless-http',
-						...(ServicePackager.coreBuildOptions.external || []),
+						...(Array.isArray(ServicePackager.coreBuildOptions.externals)
+							? ServicePackager.coreBuildOptions.externals
+							: []),
 					],
-
-					// Bind a "BUILD_DATETIME" to the build output (useful for version endpoints)
-					define: {
-						'process.env.BUILD_DATETIME': JSON.stringify(process.env.BUILD_DATETIME),
-						...(ServicePackager.coreBuildOptions.define ?? {}),
-					},
 				});
-
-				// If metafile was requested & generated, save it to a file
-				if (result.metafile) {
-					const metafilePath = join(outdir, 'metafile.json');
-					writeFileSync(metafilePath, JSON.stringify(result.metafile, null, 2), 'utf-8');
-					this.logger(`Metafile saved to ${metafilePath}`, LogColour.Green, dir);
-				}
-
-				this.logger('Build complete.', LogColour.Green, dir);
 			})
 		);
-
-		this.logger('Function build(s) completed.', LogColour.Green);
 	}
 
 	/**
@@ -287,8 +333,6 @@ export class ServicePackager {
 	 */
 	public async build(buildOptions?: CustomBuildOptions) {
 		this.logger('Building service...');
-
-		process.env.BUILD_DATETIME = new Date().toString();
 
 		await this.buildAPIProxy();
 
