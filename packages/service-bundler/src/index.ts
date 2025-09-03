@@ -98,7 +98,7 @@ export class ServicePackager {
 		},
 		ignoreWarnings: [
 			{
-				module: /routing-controllers/,
+				message: /the request of a dependency is an expression/,
 			},
 		],
 		devtool: process.argv.includes('--source-map') ? 'source-map' : false,
