@@ -99,7 +99,19 @@ export class ServicePackager {
 		logLevel: 'info',
 		platform: 'node',
 		external: ['@koa/*', '@babel/*'],
-		plugins: [esbuildDecorators()],
+		plugins: [
+			esbuildDecorators(),
+			{
+				// load native "node" modules i.e. files that end in .node
+				name: 'node-loader',
+				setup(build) {
+					build.onLoad({ filter: /\.node$/ }, (args) => ({
+						contents: `module.exports = require(${JSON.stringify(args.path)})`,
+						loader: 'js',
+					}));
+				},
+			},
+		],
 	};
 
 	/**
