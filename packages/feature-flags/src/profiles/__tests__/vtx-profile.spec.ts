@@ -45,7 +45,7 @@ describe('app config configuration', () => {
 				enabled: true,
 			},
 			specialistDefects: {
-				enableIM29: true,
+				enabled: true,
 				adasImNumbers: [29, 99],
 			},
 		};
@@ -62,6 +62,7 @@ describe('app config configuration', () => {
 		expect(flags.recallsApi.enabled).toBe(true);
 		expect(flags.automatedCt.enabled).toBe(true);
 		expect(flags.abandonedCerts.enabled).toBe(true);
+		expect(flags.specialistDefects.enabled).toBe(true);
 		expect(flags.specialistDefects.adasImNumbers).toEqual([29, 99]);
 	});
 });
