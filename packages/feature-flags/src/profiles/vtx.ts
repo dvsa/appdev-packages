@@ -21,6 +21,10 @@ const defaultFeatureFlags = {
 	abandonedCerts: {
 		enabled: true,
 	},
+	specialistDefects: {
+		enabled: false,
+		adasImNumbers: [29],
+	},
 
 	/**
 	 * Feature flags for the CVS test facility domain

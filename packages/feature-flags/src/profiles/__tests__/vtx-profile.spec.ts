@@ -22,6 +22,8 @@ describe('app config configuration', () => {
 		expect(flags.recallsApi.enabled).toBe(true);
 		expect(flags.automatedCt.enabled).toBe(false);
 		expect(flags.abandonedCerts.enabled).toBe(true);
+		expect(flags.specialistDefects.enabled).toBe(false);
+		expect(flags.specialistDefects.adasImNumbers).toEqual([29]);
 	});
 
 	it('should override some flags with a partial response', async () => {
@@ -42,6 +44,10 @@ describe('app config configuration', () => {
 			abandonedCerts: {
 				enabled: true,
 			},
+			specialistDefects: {
+				enableIM29: true,
+				adasImNumbers: [29, 99],
+			},
 		};
 
 		getAppConfig.mockReturnValue(expectedFlags);
@@ -56,5 +62,6 @@ describe('app config configuration', () => {
 		expect(flags.recallsApi.enabled).toBe(true);
 		expect(flags.automatedCt.enabled).toBe(true);
 		expect(flags.abandonedCerts.enabled).toBe(true);
+		expect(flags.specialistDefects.adasImNumbers).toEqual([29, 99]);
 	});
 });
