@@ -1,6 +1,6 @@
 {
   "name": "@dvsa/openapi-schema-generator",
-  "version": "2.1.0-canary.7",
+  "version": "2.1.0",
   "author": "DVSA",
   "license": "ISC",
   "files": [
