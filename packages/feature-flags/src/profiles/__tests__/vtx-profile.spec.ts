@@ -24,6 +24,25 @@ describe('app config configuration', () => {
 		expect(flags.abandonedCerts.enabled).toBe(true);
 		expect(flags.specialistDefects.enabled).toBe(false);
 		expect(flags.specialistDefects.adasImNumbers).toEqual([29]);
+    expect(flags.skipAutomatedProcesses.enabled).toBe(false);
+    expect(flags.skipAutomatedProcesses.atfReportGen).toBe(false);
+    expect(flags.skipAutomatedProcesses.centralDocsNotify).toBe(false);
+    expect(flags.skipAutomatedProcesses.certGen).toBe(false);
+    expect(flags.skipAutomatedProcesses.certGovNotify).toBe(false);
+    expect(flags.skipAutomatedProcesses.docGenUpload).toBe(false);
+    expect(flags.skipAutomatedProcesses.evlSftpPush).toBe(false);
+    expect(flags.skipAutomatedProcesses.exportAnts).toBe(false);
+    expect(flags.skipAutomatedProcesses.exportEvl).toBe(false);
+    expect(flags.skipAutomatedProcesses.exportProhibition).toBe(false);
+    expect(flags.skipAutomatedProcesses.exportTestResults).toBe(false);
+    expect(flags.skipAutomatedProcesses.exportTfl).toBe(false);
+    expect(flags.skipAutomatedProcesses.putTestStation).toBe(false);
+    expect(flags.skipAutomatedProcesses.retroGen).toBe(false);
+    expect(flags.skipAutomatedProcesses.scheduledOperations).toBe(false);
+    expect(flags.skipAutomatedProcesses.updateStoreTechRecords).toBe(false);
+    expect(flags.skipAutomatedProcesses.updateStoreTestResults).toBe(false);
+    expect(flags.skipAutomatedProcesses.updateTestStation).toBe(false);
+    expect(flags.skipAutomatedProcesses.updateTestVrm).toBe(false);
 	});
 
 	it('should override some flags with a partial response', async () => {
@@ -48,6 +67,12 @@ describe('app config configuration', () => {
 				enabled: true,
 				adasImNumbers: [29, 99],
 			},
+      skipAutomatedProcesses: {
+        enabled: true,
+        certGovNotify: true,
+        exportAnts: true,
+        updateStoreTechRecords: true
+      }
 		};
 
 		getAppConfig.mockReturnValue(expectedFlags);
@@ -64,5 +89,10 @@ describe('app config configuration', () => {
 		expect(flags.abandonedCerts.enabled).toBe(true);
 		expect(flags.specialistDefects.enabled).toBe(true);
 		expect(flags.specialistDefects.adasImNumbers).toEqual([29, 99]);
+    expect(flags.skipAutomatedProcesses.enabled).toBe(true);
+    expect(flags.skipAutomatedProcesses.certGovNotify).toBe(true);
+    expect(flags.skipAutomatedProcesses.exportAnts).toBe(true);
+    expect(flags.skipAutomatedProcesses.updateStoreTechRecords).toBe(true);
+    expect(flags.skipAutomatedProcesses.updateStoreTestResults).toBe(false);
 	});
 });
