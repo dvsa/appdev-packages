@@ -39,6 +39,7 @@ describe('app config configuration', () => {
 		expect(flags.skipAutomatedProcesses.putTestStation).toBe(false);
 		expect(flags.skipAutomatedProcesses.retroGen).toBe(false);
 		expect(flags.skipAutomatedProcesses.scheduledOperations).toBe(false);
+		expect(flags.skipAutomatedProcesses.syncTestResultInfo).toBe(false);
 		expect(flags.skipAutomatedProcesses.updateStoreTechRecords).toBe(false);
 		expect(flags.skipAutomatedProcesses.updateStoreTestResults).toBe(false);
 		expect(flags.skipAutomatedProcesses.updateTestStation).toBe(false);

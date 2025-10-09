@@ -41,6 +41,7 @@ const defaultFeatureFlags = {
 		putTestStation: false,
 		retroGen: false,
 		scheduledOperations: false,
+		syncTestResultInfo: false,
 		updateStoreTechRecords: false,
 		updateStoreTestResults: false,
 		updateTestStation: false,
