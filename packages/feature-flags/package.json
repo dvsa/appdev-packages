@@ -38,7 +38,7 @@
     "@biomejs/biome": "1.8.3",
     "@dvsa/biome-config": "0.1.0",
     "@aws-sdk/client-appconfigdata": "^3.637.0",
-    "@smithy/util-stream": "^3.0.1",
+    "@smithy/util-stream": "^4.5.1",
     "@types/aws-lambda": "^8.10.145",
     "@types/jest": "^29.5.14",
     "@types/lodash.merge": "^4.6.9",
