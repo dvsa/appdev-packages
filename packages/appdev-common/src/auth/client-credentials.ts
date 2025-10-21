@@ -60,13 +60,20 @@ export class ClientCredentials {
 		const response = await fetch(this.tokenUrl, {
 			method: "POST",
 			headers: { "Content-Type": "application/x-www-form-urlencoded" },
-			body: stringify({
-				grant_type: ClientCredentials.grantType,
-				client_id: this.clientId,
-				client_secret: this.clientSecret,
-				scope: this.scope,
-				resource: this.resource,
-			}),
+			body: this.resource
+				? stringify({
+						grant_type: ClientCredentials.grantType,
+						client_id: this.clientId,
+						client_secret: this.clientSecret,
+						scope: this.scope,
+						resource: this.resource,
+					})
+				: stringify({
+						grant_type: ClientCredentials.grantType,
+						client_id: this.clientId,
+						client_secret: this.clientSecret,
+						scope: this.scope,
+					}),
 		});
 
 		if (!response.ok) {
