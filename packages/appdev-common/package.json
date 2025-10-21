@@ -3,6 +3,11 @@
 	"version": "0.10.1",
 	"keywords": ["dvsa", "nodejs", "typescript"],
 	"author": "DVSA",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/dvsa/appdev-packages.git",
+		"directory": "packages/appdev-common"
+	},
 	"description": "Utils library for common API functionality",
 	"publishConfig": {
 		"directory": "dist",

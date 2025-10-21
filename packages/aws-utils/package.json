@@ -4,6 +4,11 @@
   "description": "Helper library for simplifying and standardising usage of AWS clients",
   "author": "DVSA",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dvsa/appdev-packages.git",
+    "directory": "packages/aws-utils"
+  },
   "files": [
     "classes/**",
     "functions/**",

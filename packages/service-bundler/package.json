@@ -3,6 +3,11 @@
   "version": "1.6.1",
   "author": "DVSA",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dvsa/appdev-packages.git",
+    "directory": "packages/service-bundler"
+  },
   "scripts": {
     "build": "npm run clean && tsup && cp ./src/empty-module.ts ./dist/empty-module.js",
     "clean": "rimraf coverage dist && npm run clean:temp",
