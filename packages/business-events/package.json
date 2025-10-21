@@ -4,6 +4,11 @@
   "description": "A package to help manage business events in a domain context.",
   "author": "DVSA",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dvsa/appdev-packages.git",
+    "directory": "packages/business-events"
+  },
   "files": [
     "**.{js,ts}",
     "!jest.config.ts",

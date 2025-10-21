@@ -1,9 +1,14 @@
 {
   "name": "@dvsa/aws-utilities",
-  "version": "1.8.1",
+  "version": "1.8.2",
   "description": "Helper library for simplifying and standardising usage of AWS clients",
   "author": "DVSA",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dvsa/appdev-packages.git",
+    "directory": "packages/aws-utils"
+  },
   "files": [
     "classes/**",
     "functions/**",

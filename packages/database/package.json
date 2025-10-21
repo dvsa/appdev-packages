@@ -4,6 +4,11 @@
   "description": "Common package to be used for database operations",
   "author": "DVSA",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dvsa/appdev-packages.git",
+    "directory": "packages/database"
+  },
   "files": [
     "session/**",
     "LICENSE",

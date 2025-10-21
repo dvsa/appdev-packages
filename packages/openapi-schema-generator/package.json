@@ -1,6 +1,6 @@
 {
   "name": "@dvsa/openapi-schema-generator",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "author": "DVSA",
   "license": "ISC",
   "files": [
@@ -10,6 +10,11 @@
     "LICENSE",
     "package.json"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dvsa/appdev-packages.git",
+    "directory": "packages/openapi-schema-generator"
+  },
   "scripts": {
     "build": "npm run clean && tsup src/index.ts --format esm,cjs --treeshake --dts --external typescript --minify",
     "clean": "rimraf coverage dist && npm run clean:temp",

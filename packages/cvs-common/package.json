@@ -4,6 +4,11 @@
   "description": "Common package to be used in CVS microservices",
   "author": "DVSA",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dvsa/appdev-packages.git",
+    "directory": "packages/cvs-common"
+  },
   "files": [
     "api/**",
     "classes/**",
