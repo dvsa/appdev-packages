@@ -27,7 +27,10 @@ export class HTTP {
 	 * @param url
 	 * @param options
 	 */
-	static async get(url: string, options?: RequestInit): Promise<HTTPResponse> {
+	static async get(
+		url: string,
+		options?: Omit<RequestInit, "method" | "body">,
+	): Promise<HTTPResponse> {
 		const response = await fetch(url, { method: "GET", ...options });
 
 		const serialisedResponse = await HTTP.serialise(response);
@@ -52,13 +55,18 @@ export class HTTP {
 	static async post<T>(
 		url: string,
 		body: T,
-		options?: RequestInit,
+		options?: Omit<RequestInit, "method" | "body">,
 	): Promise<HTTPResponse> {
+		const { contentType, processedBody } = HTTP.prepareBody(body);
+
 		const response = await fetch(url, {
-			method: "POST",
-			headers: { "Content-Type": "application/json", ...options?.headers },
-			body: JSON.stringify(body),
 			...options,
+			method: "POST",
+			headers: {
+				...(contentType && { "Content-Type": contentType }),
+				...options?.headers,
+			},
+			body: processedBody,
 		});
 
 		const serialisedResponse = await HTTP.serialise(response);
@@ -83,13 +91,18 @@ export class HTTP {
 	static async put<T>(
 		url: string,
 		body: T,
-		options?: RequestInit,
+		options?: Omit<RequestInit, "method" | "body">,
 	): Promise<HTTPResponse> {
+		const { contentType, processedBody } = HTTP.prepareBody(body);
+
 		const response = await fetch(url, {
-			method: "PUT",
-			headers: { "Content-Type": "application/json", ...options?.headers },
-			body: JSON.stringify(body),
 			...options,
+			method: "PUT",
+			headers: {
+				...(contentType && { "Content-Type": contentType }),
+				...options?.headers,
+			},
+			body: processedBody,
 		});
 
 		const serialisedResponse = await HTTP.serialise(response);
@@ -112,7 +125,7 @@ export class HTTP {
 	 */
 	static async delete(
 		url: string,
-		options?: RequestInit,
+		options?: Omit<RequestInit, "method" | "body">,
 	): Promise<HTTPResponse> {
 		const response = await fetch(url, { method: "DELETE", ...options });
 
@@ -151,6 +164,34 @@ export class HTTP {
 			redirected: response.redirected,
 			type: response.type,
 			body,
+		};
+	}
+
+	private static prepareBody<T>(body: T): {
+		contentType: string | undefined;
+		processedBody: BodyInit;
+	} {
+		if (body instanceof FormData) {
+			return { contentType: undefined, processedBody: body };
+		}
+
+		if (body instanceof URLSearchParams) {
+			return {
+				contentType: "application/x-www-form-urlencoded",
+				processedBody: body,
+			};
+		}
+
+		if (typeof body === "string") {
+			return {
+				contentType: "text/plain",
+				processedBody: body,
+			};
+		}
+
+		return {
+			contentType: "application/json",
+			processedBody: JSON.stringify(body),
 		};
 	}
 }
