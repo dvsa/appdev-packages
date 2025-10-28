@@ -24,6 +24,8 @@ const defaultFeatureFlags = {
 	specialistDefects: {
 		enabled: false,
 		adasImNumbers: [29],
+		includeOnCertificates: false,
+		includeOnEnquiry: false,
 	},
 	skipAutomatedProcesses: {
 		enabled: false,
