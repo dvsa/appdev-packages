@@ -77,7 +77,12 @@ export class ClientCredentials {
 		});
 
 		if (!response.ok) {
-			console.error("Error fetching client credentials", response);
+			const errorBody = await response.text();
+			console.error(
+				"Error fetching client credentials",
+				response.status,
+				errorBody,
+			);
 			throw new Error("Failed to fetch client credentials");
 		}
 
