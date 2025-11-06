@@ -1,4 +1,4 @@
-import type { Logger } from "@aws-lambda-powertools/logger/lib/esm";
+import type { Logger } from "@aws-lambda-powertools/logger";
 import type { NextFunction, Request, Response } from "express";
 import { HttpStatus } from "../api/http-status-codes";
 import { DataCompression } from "./compression";
