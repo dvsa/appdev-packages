@@ -1,3 +1,4 @@
+import type { Logger } from "@aws-lambda-powertools/logger/lib/esm";
 import type { NextFunction, Request, Response } from "express";
 import { HttpStatus } from "../api/http-status-codes";
 import { DataCompression } from "./compression";
@@ -7,12 +8,14 @@ import { DataCompression } from "./compression";
  * @param {Request} request - Express request object
  * @param {Response} response - Express response object
  * @param {NextFunction} next - Next function to pass control to the next middleware
+ * @param {Logger} logger - logger to indicate encoded requests
  * @constructor
  */
 export const DecodeBase64GzipPayload = (
 	request: Request,
 	response: Response,
 	next: NextFunction,
+	logger?: Logger,
 ) => {
 	const compressionHeaderValue = "base64+gzip";
 
@@ -21,6 +24,7 @@ export const DecodeBase64GzipPayload = (
 			typeof request.body === "string" &&
 			request.header("X-Payload-Encoding") === compressionHeaderValue
 		) {
+			logger?.debug("Encoded request received");
 			request.body = DataCompression.decompress(request.body);
 		}
 	} catch (err) {
