@@ -25,6 +25,7 @@
   "dependencies": {
     "@rspack/core": "^1.6.5",
     "fs-extra": "^11.3.0",
+    "val-loader": "^6.0.0",
     "zip-lib": "^1.1.2"
   },
   "devDependencies": {
@@ -40,8 +41,7 @@
     "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
     "tsup": "^8.4.0",
-    "typescript": "^5.3.3",
-    "val-loader": "^6.0.0"
+    "typescript": "^5.3.3"
   },
   "lint-staged": {
     "*.{js,ts,mjs,css,md,ts,json}": "npm run lint:fix -- --no-errors-on-unmatched"

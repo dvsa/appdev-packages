@@ -131,17 +131,10 @@ export class ServicePackager {
 				},
 				{
 					test: /\.node$/,
-					type: 'javascript/auto',
-					use: [
-						{
-							loader: 'val-loader',
-							options: {
-								executableFile: (resourcePath: string) => {
-									return `module.exports = require(${JSON.stringify(resourcePath)});`;
-								},
-							},
-						},
-					],
+					type: 'asset/resource',
+					generator: {
+						filename: '[name][ext]',
+					},
 				},
 			],
 		},
