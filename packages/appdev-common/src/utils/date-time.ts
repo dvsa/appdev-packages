@@ -311,4 +311,9 @@ export class DateTime {
 			utcOffset: this.instance.utcOffset(),
 		};
 	}
+
+	static formatForDB(dateStr: Date | string): string {
+		const date = typeof dateStr === "string" ? new Date(dateStr) : dateStr;
+		return date.toISOString().replace("T", " ").replace("Z", "");
+	}
 }
