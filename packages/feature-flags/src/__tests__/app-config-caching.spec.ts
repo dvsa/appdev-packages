@@ -32,7 +32,8 @@ describe('feature flag caching', () => {
 		},
 	};
 
-	const client = mockClient(AppConfigDataClient);
+	// biome-ignore lint/suspicious/noExplicitAny: any for tests
+	const client = mockClient(AppConfigDataClient as any) as any;
 
 	beforeEach(() => {
 		const token = 'FAKE_TOKEN';
