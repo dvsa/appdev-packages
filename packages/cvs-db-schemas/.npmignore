@@ -1,0 +1,12 @@
+src/
+tests/
+.github/
+.gitignore
+.prettierrc
+jest.config.ts
+biome.json
+tsconfig.json
+webpack.config.js
+jest.config.js
+*.test.js
+*.spec.js

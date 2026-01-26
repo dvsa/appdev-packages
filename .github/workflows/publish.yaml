@@ -14,6 +14,7 @@ on:
         options:
           - 'appdev-common'
           - 'cvs-common'
+          - 'cvs-db-schemas'
           - 'feature-flags'
           - 'service-bundler'
           - 'aws-utils'
@@ -26,14 +27,16 @@ on:
       - main
 
 permissions:
+  id-token: write  # Required for OIDC
   contents: read
-  
+
 jobs:
   orchestrator:
     name: Orchestrator
     runs-on: ubuntu-latest
     outputs:
       publish-cvs-common: ${{ steps.changed-cvs-common.outputs.any_changed == 'true' || null }}
+      publish-cvs-db-schemas: ${{ steps.changed-cvs-db-schemas.outputs.any_changed == 'true' || null }}
       publish-appdev-common: ${{ steps.changed-appdev-common.outputs.any_changed == 'true' || null }}
       publish-feature-flags: ${{ steps.changed-feat-flags.outputs.any_changed == 'true' || null }}
       publish-service-bundler: ${{ steps.changed-service-bundler.outputs.any_changed == 'true' || null }}
@@ -44,68 +47,75 @@ jobs:
       publish-business-events: ${{ steps.changed-business-events.outputs.any_changed == 'true' || null }}
     steps:
       - name: 📨 Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - name: Check for `/packages/cvs-common` changes
-        uses: tj-actions/changed-files@v46
+        uses: tj-actions/changed-files@v47
         id: changed-cvs-common
         with:
           files: |
             packages/cvs-common/**
 
+      - name: Check for `/packages/cvs-db-schemas` changes
+        uses: tj-actions/changed-files@v47
+        id: changed-cvs-db-schemas
+        with:
+          files: |
+            packages/cvs-db-schemas/**
+
       - name: Check for `/packages/appdev-common` changes
-        uses: tj-actions/changed-files@v46
+        uses: tj-actions/changed-files@v47
         id: changed-appdev-common
         with:
           files: |
             packages/appdev-common/**
 
       - name: Check for `/packages/feature-flags` changes
-        uses: tj-actions/changed-files@v46
+        uses: tj-actions/changed-files@v47
         id: changed-feat-flags
         with:
           files: |
             packages/feature-flags/**    
 
       - name: Check for `/packages/service-bundler` changes
-        uses: tj-actions/changed-files@v46
+        uses: tj-actions/changed-files@v47
         id: changed-service-bundler
         with:
           files: |
             packages/service-bundler/**
 
       - name: Check for `/packages/aws-utils` changes
-        uses: tj-actions/changed-files@v46
+        uses: tj-actions/changed-files@v47
         id: changed-aws-utils
         with:
           files: |
             packages/aws-utils/**        
 
       - name: Check for `/packages/database` changes
-        uses: tj-actions/changed-files@v46
+        uses: tj-actions/changed-files@v47
         id: changed-database-operations
         with:
           files: |
             packages/database/**
 
       - name: Check for `/packages/biome-config` changes
-        uses: tj-actions/changed-files@v46
+        uses: tj-actions/changed-files@v47
         id: changed-biome-config
         with:
           files: |
             packages/biome-config/**
 
       - name: Check for `/packages/business-events` changes
-        uses: tj-actions/changed-files@v46
+        uses: tj-actions/changed-files@v47
         id: changed-business-events
         with:
           files: |
             packages/business-events/**
 
       - name: Check for `/packages/openai-schema-generator` changes
-        uses: tj-actions/changed-files@v46
+        uses: tj-actions/changed-files@v47
         id: changed-openapi-schema-gen
         with:
           files: |
@@ -117,7 +127,7 @@ jobs:
     if: ${{ needs.orchestrator.outputs.publish-cvs-common || github.event_name == 'workflow_dispatch' && inputs.package == 'cvs-common'}}
     steps:
       - name: 📨 Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Publish package "packages/cvs-common" ${{ inputs.dry-run && 'in' || 'not in' }} dry run mode
         uses: ./.github/actions/publish-package
@@ -132,7 +142,7 @@ jobs:
     if: ${{ needs.orchestrator.outputs.publish-appdev-common || github.event_name == 'workflow_dispatch' && inputs.package == 'appdev-common'}}
     steps:
       - name: 📨 Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Publish package "packages/appdev-common" ${{ inputs.dry-run && 'in' || 'not in' }} dry run mode
         uses: ./.github/actions/publish-package
@@ -147,7 +157,7 @@ jobs:
     if: ${{ needs.orchestrator.outputs.publish-feature-flags || github.event_name == 'workflow_dispatch' && inputs.package == 'feature-flags' }}
     steps:
       - name: 📨 Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Publish package "packages/feature-flags" ${{ inputs.dry-run && 'in' || 'not in' }} dry run mode
         uses: ./.github/actions/publish-package
@@ -162,7 +172,7 @@ jobs:
     if: ${{ needs.orchestrator.outputs.publish-service-bundler || github.event_name == 'workflow_dispatch' && inputs.package == 'service-bundler' }}
     steps:
       - name: 📨 Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Publish package "packages/service-bundler" ${{ inputs.dry-run && 'in' || 'not in' }} dry run mode
         uses: ./.github/actions/publish-package
@@ -177,7 +187,7 @@ jobs:
     if: ${{ needs.orchestrator.outputs.publish-aws-utils || github.event_name == 'workflow_dispatch' && inputs.package == 'aws-utils' }}
     steps:
       - name: 📨 Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Publish package "packages/aws-utils" ${{ inputs.dry-run && 'in' || 'not in' }} dry run mode
         uses: ./.github/actions/publish-package
@@ -192,7 +202,7 @@ jobs:
     if: ${{ needs.orchestrator.outputs.publish-database-operations || github.event_name == 'workflow_dispatch' && inputs.package == 'database' }}
     steps:
       - name: 📨 Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Publish package "packages/database" ${{ inputs.dry-run && 'in' || 'not in' }} dry run mode
         uses: ./.github/actions/publish-package
@@ -207,7 +217,7 @@ jobs:
     if: ${{ needs.orchestrator.outputs.publish-biome-config || github.event_name == 'workflow_dispatch' && inputs.package == 'biome-config' }}
     steps:
       - name: 📨 Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Publish package "packages/biome-config" ${{ inputs.dry-run && 'in' || 'not in' }} dry run mode
         uses: ./.github/actions/publish-package
@@ -222,7 +232,7 @@ jobs:
     if: ${{ needs.orchestrator.outputs.publish-business-events || github.event_name == 'workflow_dispatch' && inputs.package == 'business-events' }}
     steps:
       - name: 📨 Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Publish package "packages/business-events" ${{ inputs.dry-run && 'in' || 'not in' }} dry run mode
         uses: ./.github/actions/publish-package
@@ -237,11 +247,26 @@ jobs:
     if: ${{ needs.orchestrator.outputs.publish-openapi-schema-gen || github.event_name == 'workflow_dispatch' && inputs.package == 'openapi-schema-gen' }}
     steps:
       - name: 📨 Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Publish package "packages/openapi-schema-generator" ${{ inputs.dry-run && 'in' || 'not in' }} dry run mode
         uses: ./.github/actions/publish-package
         with:
           dry-run: ${{ inputs.dry-run && 'true' || 'false' }}
           package-path: 'packages/openapi-schema-generator'
+          token: ${{ secrets.NPM_AUTH_TOKEN }}
+
+  publish-cvs-db-schemas:
+    needs: orchestrator
+    runs-on: ubuntu-latest
+    if: ${{ needs.orchestrator.outputs.publish-cvs-db-schemas || github.event_name == 'workflow_dispatch' && inputs.package == 'cvs-db-schemas' }}
+    steps:
+      - name: 📨 Checkout
+        uses: actions/checkout@v6
+
+      - name: Publish package "packages/cvs-db-schemas" ${{ inputs.dry-run && 'in' || 'not in' }} dry run mode
+        uses: ./.github/actions/publish-package
+        with:
+          dry-run: ${{ inputs.dry-run && 'true' || 'false' }}
+          package-path: 'packages/cvs-db-schemas'
           token: ${{ secrets.NPM_AUTH_TOKEN }}
