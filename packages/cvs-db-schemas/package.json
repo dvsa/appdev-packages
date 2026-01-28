@@ -1,0 +1,53 @@
+{
+  "name": "@dvsa/cvs-db-schemas",
+  "version": "0.0.1",
+  "description": "CVS Drizzle Schema Common Package",
+  "author": "DVSA",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dvsa/appdev-packages.git",
+    "directory": "packages/cvs-db-schemas"
+  },
+  "keywords": [
+    "typescript",
+    "nodejs"
+  ],
+  "publishConfig": {
+    "directory": "dist",
+    "access": "public"
+  },
+  "scripts": {
+    "clean": "rimraf coverage dist",
+    "clean:temp": "rimraf auth api",
+    "lint": "biome check src",
+    "lint:fix": "npm run lint -- --write",
+    "build": "npm run clean && tsc",
+    "build:package": "npm run build",
+    "test": "jest --passWithNoTests",
+    "test:coverage": "npm run test -- --coverage",
+    "prepublishOnly": "npm run build:package && cp -r ./dist/* . && rm -rf ./dist",
+    "postpublish": "git clean -fd && npm run clean:temp",
+    "gitSecrets": "git secrets --scan . && git log -p -- . | scanrepo"
+  },
+  "peerDependencies": {
+    "drizzle-orm": "^0.45.1"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.1.3",
+    "@dvsa/biome-config": "1.0.0",
+    "@types/aws-lambda": "^8.10.160",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^22.19.7",
+    "husky": "^9.1.7",
+    "jest": "^30.2.0",
+    "lint-staged": "^15.2.10",
+    "rimraf": "^6.0.1",
+    "ts-jest": "^29.2.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.2"
+  },
+  "lint-staged": {
+    "*.{js,ts,mjs,css,md,ts,json}": "npm run lint:fix -- --no-errors-on-unmatched"
+  }
+}
