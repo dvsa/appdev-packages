@@ -60,6 +60,23 @@ const defaultFeatureFlags = {
 		readAurora: false,
 		writeAurora: false,
 	},
+
+	/**
+	 * Feature flags for the CVS test types domain
+	 */
+	testTypesDB: {
+		enabled: true,
+		readAurora: false,
+	},
+	/**
+	 * Feature flags for actioning entries in the outbox
+	 */
+	outbox: {
+		enabled: true,
+		processor: false,
+		purging: false,
+		reporting: false,
+	},
 };
 
 export type FeatureFlags = typeof defaultFeatureFlags;
