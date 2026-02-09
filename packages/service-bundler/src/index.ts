@@ -102,8 +102,11 @@ export class ServicePackager {
 			},
 		],
 		devtool: process.argv.includes('--source-map') ? 'source-map' : false,
-		externalsType: 'commonjs',
-		externals: ['@koa/cors', '@babel/core', /^@koa\//, /^@babel\//],
+		externalsType: 'module',
+		externals: ['@babel/core', /^@babel\//],
+		experiments: {
+			outputModule: true,
+		},
 		module: {
 			rules: [
 				{
@@ -124,7 +127,7 @@ export class ServicePackager {
 								target: 'es2024', // Direct target, no env needed for Node.js
 							},
 							module: {
-								type: 'commonjs',
+								type: 'es6',
 							},
 						},
 					},
@@ -146,6 +149,11 @@ export class ServicePackager {
 		resolve: {
 			tsConfig: resolve(process.cwd(), 'tsconfig.json'),
 			extensions: ['.ts', '.tsx', '.js', '.jsx'],
+			alias: {
+				'@koa/cors': false,
+				'@koa/multer': false,
+				koa: false,
+			},
 		},
 	};
 
@@ -158,7 +166,7 @@ export class ServicePackager {
 		Object.assign(ServicePackager.coreBuildOptions, {
 			target: `node${servicePackagerOptions.nodeMajorVersion}`,
 			...(servicePackagerOptions.rspackOptions || {}),
-			externalsType: 'commonjs',
+			externalsType: 'module',
 			externals: [
 				// Exclude any packages request via caller
 				...(Array.isArray(servicePackagerOptions.rspackOptions?.externals)
@@ -272,9 +280,9 @@ export class ServicePackager {
 			entry: { index: `${proxyDir}/index.ts` },
 			output: {
 				path: join(process.cwd(), outdir),
-				filename: '[name].js',
+				filename: '[name].mjs',
 				library: {
-					type: 'commonjs2',
+					type: 'module',
 				},
 			},
 			...ServicePackager.coreBuildOptions,
@@ -311,15 +319,15 @@ export class ServicePackager {
 					entry: { index: entryPoint },
 					output: {
 						path: outdir,
-						filename: '[name].js',
+						filename: '[name].mjs',
 						library: {
-							type: 'commonjs2',
+							type: 'module',
 						},
 					},
 					...ServicePackager.coreBuildOptions,
 
 					// exclude the packages needed for the API proxying
-					externalsType: 'commonjs',
+					externalsType: 'module',
 					externals: [
 						'cors',
 						'express',
