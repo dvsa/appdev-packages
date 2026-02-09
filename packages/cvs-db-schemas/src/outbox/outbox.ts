@@ -13,6 +13,22 @@ import {
 } from 'drizzle-orm/mysql-core';
 import { formatSchemaName } from '../helper/format-schema-name';
 
+/**
+ * @generated-schema-doc
+ * Schema: `outbox` | Table: `outbox`
+ *
+ * | Column        | Type                                                   | Nullable | Constraints                |
+ * | ------------- | ------------------------------------------------------ | -------- | -------------------------- |
+ * | id            | bigint unsigned                                        | No       | PK, AUTO INC               |
+ * | eventType     | enum(created, updated, deleted)                        | No       | NOT NULL                   |
+ * | aggregateType | enum(activity, tech-record, test-result, test-station) | No       | NOT NULL                   |
+ * | payload       | text                                                   | No       | NOT NULL                   |
+ * | status        | enum(pending, completed, failed)                       | No       | NOT NULL, default: pending |
+ * | attemptCount  | int                                                    | No       | NOT NULL, default: 0       |
+ * | createdAt     | datetime(3)                                            | Yes      | default: CURRENT_TIMESTAMP |
+ * | completedAt   | datetime                                               | Yes      |                            |
+ * | errorMessage  | text                                                   | Yes      |                            |
+ */
 export const outbox = mysqlSchema(formatSchemaName('outbox')).table(
 	'outbox',
 	{

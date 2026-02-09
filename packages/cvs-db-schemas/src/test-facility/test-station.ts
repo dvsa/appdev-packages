@@ -1,6 +1,29 @@
 import { bigint, decimal, index, mysqlSchema, primaryKey, text, unique, varchar } from 'drizzle-orm/mysql-core';
 import { formatSchemaName } from '../helper/format-schema-name';
 
+/**
+ * @generated-schema-doc
+ * Schema: `test_facility` | Table: `test_station`
+ *
+ * | Column                | Type            | Nullable | Constraints  |
+ * | --------------------- | --------------- | -------- | ------------ |
+ * | id                    | bigint unsigned | No       | PK, AUTO INC |
+ * | dynamicsTestStationId | varchar(36)     | Yes      |              |
+ * | accessNotes           | text            | Yes      |              |
+ * | address               | varchar(100)    | Yes      |              |
+ * | contactNumber         | varchar(30)     | Yes      |              |
+ * | country               | varchar(30)     | Yes      |              |
+ * | emailAddressesJson    | varchar(2000)   | Yes      |              |
+ * | generalNotes          | text            | Yes      |              |
+ * | latitude              | decimal(9,6)    | Yes      |              |
+ * | longitude             | decimal(9,6)    | Yes      |              |
+ * | name                  | varchar(160)    | Yes      |              |
+ * | pNumber               | varchar(256)    | Yes      |              |
+ * | postcode              | varchar(20)     | Yes      |              |
+ * | status                | varchar(21)     | Yes      |              |
+ * | town                  | varchar(30)     | Yes      |              |
+ * | type                  | varchar(4)      | Yes      |              |
+ */
 export const testStation = mysqlSchema(formatSchemaName('test_facility')).table(
 	'test_station',
 	{
