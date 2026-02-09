@@ -146,14 +146,31 @@ export class HTTP {
 
 		try {
 			// Clone the response so we don't consume the original body
-			body = await response.clone().json();
-		} catch {
-			// If JSON parsing fails, try text
-			try {
-				body = await response.clone().text();
-			} catch {
-				body = null;
+			const clonedResponse = response.clone();
+
+			// Extract the content-type header so we know how to serialise it
+			const contentType = response.headers.get("content-type") || "";
+
+			// Check if the JSON header is present
+			if (contentType.includes("application/json")) {
+				body = await clonedResponse.json();
 			}
+			// Check if the body is a buffer
+			else if (
+				contentType.includes("application/pdf") ||
+				contentType.includes("image/") ||
+				contentType.includes("application/octet-stream")
+			) {
+				const buffer = await clonedResponse.arrayBuffer();
+				body = Buffer.from(buffer).toString("base64");
+			}
+			// Otherwise attempt to serialise as text
+			else {
+				body = await clonedResponse.text();
+			}
+		} catch (error) {
+			console.error("Serialisation error:", error);
+			body = null;
 		}
 
 		return {
