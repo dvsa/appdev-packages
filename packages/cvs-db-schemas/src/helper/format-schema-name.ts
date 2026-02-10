@@ -15,7 +15,5 @@
 export const formatSchemaName = (baseSchemaName: string): string => {
 	const branch = process.env.BRANCH?.toUpperCase();
 
-	return branch?.includes('CB2')
-		? `${baseSchemaName}_${branch.replace('-', '')}`
-		: baseSchemaName;
+	return branch?.includes('CB2') ? `${baseSchemaName}_${branch.replace('-', '')}` : baseSchemaName;
 };
