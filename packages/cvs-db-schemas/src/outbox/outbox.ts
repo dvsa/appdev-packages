@@ -19,15 +19,16 @@ import { formatSchemaName } from '../helper/format-schema-name';
  *
  * | Column        | Type                                                   | Nullable | Constraints                |
  * | ------------- | ------------------------------------------------------ | -------- | -------------------------- |
- * | id            | bigint unsigned                                        | No       | PK, AUTO INC               |
+ * | id            | serial                                                 | No       | PK, NOT NULL               |
  * | eventType     | enum(created, updated, deleted)                        | No       | NOT NULL                   |
  * | aggregateType | enum(activity, tech-record, test-result, test-station) | No       | NOT NULL                   |
- * | payload       | text                                                   | No       | NOT NULL                   |
+ * | payload       | json                                                   | No       | NOT NULL                   |
  * | status        | enum(pending, completed, failed)                       | No       | NOT NULL, default: pending |
  * | attemptCount  | int                                                    | No       | NOT NULL, default: 0       |
- * | createdAt     | datetime(3)                                            | Yes      | default: CURRENT_TIMESTAMP |
- * | completedAt   | datetime                                               | Yes      |                            |
+ * | createdAt     | datetime(3)                                            | Yes      | default: sql`(now(3        |
+ * | updatedAt     | datetime(3)                                            | Yes      | default: sql`(now(3        |
  * | errorMessage  | text                                                   | Yes      |                            |
+ * | completedAt   | datetime                                               | Yes      |                            |
  */
 export const outbox = mysqlSchema(formatSchemaName('outbox')).table(
 	'outbox',
@@ -41,7 +42,7 @@ export const outbox = mysqlSchema(formatSchemaName('outbox')).table(
 		createdAt: datetime('created_at', { mode: 'string', fsp: 3 }).default(sql`(now(3))`),
 		updatedAt: datetime('updated_at', { mode: 'string', fsp: 3 }).default(sql`(now(3))`),
 		errorMessage: text('error_message'),
-		completedAt: datetime('completed_at'),
+		completedAt: datetime('completed_at', { mode: 'string' }),
 	},
 	(table) => [
 		unique('uq_outbox_aggregate_uuid_event').on(table.aggregateType, table.id, table.eventType),
