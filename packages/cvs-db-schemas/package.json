@@ -1,6 +1,6 @@
 {
   "name": "@dvsa/cvs-db-schemas",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "CVS Drizzle Schema Common Package",
   "author": "DVSA",
   "license": "ISC",
@@ -22,7 +22,8 @@
     "clean:temp": "rimraf auth api",
     "lint": "biome check src",
     "lint:fix": "npm run lint -- --write",
-    "build": "npm run clean && tsc",
+    "generate:schema-docs": "node scripts/generate-schema-docs.mjs",
+    "build": "npm run clean && npm run generate:schema-docs && tsc",
     "build:package": "npm run build",
     "test": "jest --passWithNoTests",
     "test:coverage": "npm run test -- --coverage",

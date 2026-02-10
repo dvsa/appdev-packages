@@ -2,6 +2,32 @@ import { sql } from 'drizzle-orm';
 import { bigint, datetime, foreignKey, index, mysqlSchema, primaryKey, unique, varchar } from 'drizzle-orm/mysql-core';
 import { formatSchemaName } from '../helper/format-schema-name';
 
+/**
+ * @generated-schema-doc
+ * Schema: `test_facility` | Table: `activity`
+ *
+ * | Column              | Type            | Nullable | Constraints                |
+ * | ------------------- | --------------- | -------- | -------------------------- |
+ * | id                  | bigint unsigned | No       | PK, AUTO INC               |
+ * | activityUuid        | varchar(36)     | Yes      |                            |
+ * | testerStaffId       | varchar(40)     | Yes      |                            |
+ * | testerStaffName     | varchar(100)    | Yes      |                            |
+ * | testerStaffEmail    | varchar(200)    | Yes      |                            |
+ * | testStationId       | bigint unsigned | No       | NOT NULL                   |
+ * | parentActivityId    | bigint unsigned | Yes      |                            |
+ * | activityType        | varchar(50)     | Yes      |                            |
+ * | startDatetime       | datetime(3)     | Yes      |                            |
+ * | endDatetime         | datetime(3)     | Yes      |                            |
+ * | waitReason          | varchar(150)    | Yes      |                            |
+ * | notes               | varchar(500)    | Yes      |                            |
+ * | closureReason       | varchar(20)     | Yes      |                            |
+ * | createdById         | varchar(40)     | Yes      |                            |
+ * | createdByName       | varchar(200)    | Yes      |                            |
+ * | insertedDatetime    | datetime(3)     | Yes      | default: CURRENT_TIMESTAMP |
+ * | lastUpdatedById     | varchar(40)     | Yes      |                            |
+ * | lastUpdatedByName   | varchar(200)    | Yes      |                            |
+ * | lastUpdatedDatetime | datetime(3)     | Yes      | default: CURRENT_TIMESTAMP |
+ */
 export const activity = mysqlSchema(formatSchemaName('test_facility')).table(
 	'activity',
 	{
