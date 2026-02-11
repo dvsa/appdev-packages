@@ -193,6 +193,27 @@ export class TypescriptToOpenApiSpec {
 		// Transform #/definitions/ references to #/components/schemas/ for OpenAPI 3.x compliance
 		finalSpec = TypescriptToOpenApiSpec.transformReferences(finalSpec);
 
+		// Sanitise schemas
+		for (const schema of Object.values(finalSpec.components?.schemas ?? {})) {
+			if ('properties' in schema && schema?.properties?.undefined) {
+				// biome-ignore lint/performance/noDelete: Fine here
+				delete schema.properties.undefined;
+			}
+
+			if ('required' in schema && schema?.required) {
+				schema.required = schema.required.filter((r) => r !== 'undefined');
+			}
+		}
+
+		// Sanitise path parameters
+		for (const methods of Object.values(finalSpec.paths ?? {})) {
+			for (const operation of Object.values(methods)) {
+				if (operation?.parameters) {
+					operation.parameters = operation.parameters.filter((p: { name: string }) => p.name !== 'undefined');
+				}
+			}
+		}
+
 		// Log summary of the generated spec
 		extra?.verboseLogging &&
 			console.log(`OpenAPI spec generation complete with ${Object.keys(finalSpec.paths || {}).length} total paths`);
