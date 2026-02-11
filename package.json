@@ -1,6 +1,7 @@
 {
   "name": "appdev-packages",
   "description": "Packages to be used in AppDev microservices",
+  "version": "0.0.0",
   "keywords": [
     "typescript",
     "nodejs"
