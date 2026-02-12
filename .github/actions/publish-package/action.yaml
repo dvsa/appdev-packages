@@ -33,6 +33,10 @@ runs:
       env:
         ACCESS_TOKEN: ${{ inputs.token }}
 
+    - name: Update npm to latest version for OIDC support
+      shell: bash
+      run: npm install -g npm@latest
+
     - name: ➕ Install dependencies
       shell: bash
       run: npm ci
