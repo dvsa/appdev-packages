@@ -1,6 +1,6 @@
 {
 	"name": "@dvsa/appdev-api-common",
-	"version": "1.2.0",
+	"version": "1.3.0",
 	"keywords": ["dvsa", "nodejs", "typescript"],
 	"author": "DVSA",
 	"repository": {
@@ -28,6 +28,7 @@
 		"gitSecrets": "git secrets --scan . && git log -p -- . | scanrepo"
 	},
 	"dependencies": {
+		"@aws-sdk/client-sts": "^3.989.0",
 		"ajv": "^8.17.1",
 		"ajv-formats": "^3.0.1",
 		"dayjs": "^1.11.13",
