@@ -153,7 +153,11 @@ export class HTTP {
 
 			// Check if the JSON header is present
 			if (contentType.includes("application/json")) {
-				body = await clonedResponse.json();
+				// parse to text first
+				const text = await clonedResponse.text();
+
+				// if there is an empty body e.g. 204, calling `.json()` would cause an error to be thrown, therefore check length
+				body = text.trim().length ? JSON.parse(text) : null;
 			}
 			// Check if the body is a buffer
 			else if (
