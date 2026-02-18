@@ -37,7 +37,7 @@ export const outbox = mysqlSchema(formatSchemaName('outbox')).table(
 		eventType: mysqlEnum('event_type', ['created', 'updated', 'deleted']).notNull(),
 		aggregateType: mysqlEnum('aggregate_type', ['activity', 'tech-record', 'test-result']).notNull(),
 		payload: json().notNull(),
-		status: mysqlEnum('status', ['pending', 'completed', 'failed']).notNull().default('pending'),
+		status: mysqlEnum('status', ['pending', 'processing', 'created', 'failed']).notNull().default('pending'),
 		attemptCount: int('attempt_count').notNull().default(0),
 		createdAt: datetime('created_at', { mode: 'string', fsp: 3 }).default(sql`(now(3))`),
 		updatedAt: datetime('updated_at', { mode: 'string', fsp: 3 }).default(sql`(now(3))`),
