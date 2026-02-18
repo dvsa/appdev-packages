@@ -1,6 +1,6 @@
 {
   "name": "@dvsa/cvs-db-schemas",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "CVS Drizzle Schema Common Package",
   "author": "DVSA",
   "license": "ISC",
