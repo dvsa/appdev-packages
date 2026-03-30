@@ -200,8 +200,13 @@ export class TypescriptToOpenApiSpec {
 				delete schema.properties.undefined;
 			}
 
+			if ('properties' in schema && schema?.properties?.['openapi-doc']) {
+				// biome-ignore lint/performance/noDelete: Fine here
+				delete schema.properties['openapi-doc'];
+			}
+
 			if ('required' in schema && schema?.required) {
-				schema.required = schema.required.filter((r) => r !== 'undefined');
+				schema.required = schema.required.filter((r) => r !== 'undefined' && r !== 'openapi-doc');
 			}
 		}
 

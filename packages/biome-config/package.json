@@ -9,7 +9,8 @@
   },
   "scripts": {
     "gitSecrets": "git secrets --scan . && git log -p -- . | scanrepo",
-    "lint:fix": "echo 'Not implemented'"
+    "lint:fix": "echo 'Not implemented'",
+    "test": "echo 'Not implemented'"
   },
   "author": "DVSA",
   "type": "module",
