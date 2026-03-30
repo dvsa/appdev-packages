@@ -1,6 +1,6 @@
 {
   "name": "@dvsa/openapi-schema-generator",
-  "version": "2.3.0",
+  "version": "2.3.1",
   "author": "DVSA",
   "license": "ISC",
   "files": [
