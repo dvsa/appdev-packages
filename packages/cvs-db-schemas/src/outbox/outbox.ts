@@ -17,18 +17,18 @@ import { formatSchemaName } from '../helper/format-schema-name';
  * @generated-schema-doc
  * Schema: `outbox` | Table: `outbox`
  *
- * | Column        | Type                                                   | Nullable | Constraints                |
- * | ------------- | ------------------------------------------------------ | -------- | -------------------------- |
- * | id            | serial                                                 | No       | PK, NOT NULL               |
- * | eventType     | enum(created, updated, deleted)                        | No       | NOT NULL                   |
- * | aggregateType | enum(activity, tech-record, test-result, test-station) | No       | NOT NULL                   |
- * | payload       | json                                                   | No       | NOT NULL                   |
- * | status        | enum(pending, completed, failed)                       | No       | NOT NULL, default: pending |
- * | attemptCount  | int                                                    | No       | NOT NULL, default: 0       |
- * | createdAt     | datetime(3)                                            | Yes      | default: sql`(now(3        |
- * | updatedAt     | datetime(3)                                            | Yes      | default: sql`(now(3        |
- * | errorMessage  | text                                                   | Yes      |                            |
- * | completedAt   | datetime                                               | Yes      |                            |
+ * | Column        | Type                                       | Nullable | Constraints                |
+ * | ------------- | ------------------------------------------ | -------- | -------------------------- |
+ * | id            | serial                                     | No       | PK, NOT NULL               |
+ * | eventType     | enum(created, updated, deleted)            | No       | NOT NULL                   |
+ * | aggregateType | enum(activity, tech-record, test-result)   | No       | NOT NULL                   |
+ * | payload       | json                                       | No       | NOT NULL                   |
+ * | status        | enum(pending, processing, created, failed) | No       | NOT NULL, default: pending |
+ * | attemptCount  | int                                        | No       | NOT NULL, default: 0       |
+ * | createdAt     | datetime(3)                                | Yes      | default: sql`(now(3        |
+ * | updatedAt     | datetime(3)                                | Yes      | default: sql`(now(3        |
+ * | errorMessage  | text                                       | Yes      |                            |
+ * | completedAt   | datetime                                   | Yes      |                            |
  */
 export const outbox = mysqlSchema(formatSchemaName('outbox')).table(
 	'outbox',
