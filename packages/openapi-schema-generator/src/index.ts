@@ -200,13 +200,8 @@ export class TypescriptToOpenApiSpec {
 				delete schema.properties.undefined;
 			}
 
-			if ('properties' in schema && schema?.properties?.['openapi-doc']) {
-				// biome-ignore lint/performance/noDelete: Fine here
-				delete schema.properties['openapi-doc'];
-			}
-
 			if ('required' in schema && schema?.required) {
-				schema.required = schema.required.filter((r) => r !== 'undefined' && r !== 'openapi-doc');
+				schema.required = schema.required.filter((r) => r !== 'undefined');
 			}
 		}
 
@@ -224,7 +219,14 @@ export class TypescriptToOpenApiSpec {
 			console.log(`OpenAPI spec generation complete with ${Object.keys(finalSpec.paths || {}).length} total paths`);
 
 		// Convert the merged spec to a JSON string
-		return finalSpec;
+		return {
+			...finalSpec,
+			paths: Object.fromEntries(
+				Object.entries(finalSpec.paths).filter(
+					([key]) => !key.includes('/undefined/') && !key.includes('/openapi-doc/')
+				)
+			),
+		};
 	}
 
 	/**
