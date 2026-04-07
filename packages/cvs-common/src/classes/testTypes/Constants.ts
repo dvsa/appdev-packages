@@ -62,6 +62,12 @@ export const VOLUNTARY_IVA_TEST: ITestTypeList = {
 export const PROHIBITION_CLEARANCE_TEST: ITestTypeList = {
 	IDS: [
 		// HGV
+		'53',
+		'54',
+		'62',
+		'63',
+		'65',
+		'66',
 		'70',
 		'71',
 		'72',
@@ -77,9 +83,14 @@ export const PROHIBITION_CLEARANCE_TEST: ITestTypeList = {
 		// TRL
 		'40',
 		'41',
+		'98',
+		'99',
 		'118',
 		'119',
 		'120',
+		'101',
+		'103',
+		'104',
 		'105',
 		'107',
 		'108',
@@ -90,6 +101,9 @@ export const PROHIBITION_CLEARANCE_TEST: ITestTypeList = {
 		'116',
 		'117',
 		// PSV
+		'7',
+		'8',
+		'10',
 		'14',
 		'15',
 		'16',
