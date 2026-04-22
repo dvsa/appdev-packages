@@ -1,5 +1,5 @@
 import { type Dirent, existsSync, readdirSync } from 'node:fs';
-import { stat } from 'node:fs/promises';
+import { readFile, readdir, stat } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { DefinePlugin, type RspackOptions, Stats, rspack } from '@rspack/core';
 import { copy } from 'fs-extra';
@@ -260,6 +260,40 @@ export class ServicePackager {
 		});
 	}
 
+	private static async assertArtifactDoesNotReferencePackage(
+		artifactDir: string,
+		packageName: string,
+		context: string
+	) {
+		const files = await ServicePackager.getFiles(artifactDir);
+
+		for (const file of files) {
+			if (!/\.[cm]?js$/.test(file)) {
+				continue;
+			}
+
+			const contents = await readFile(file, 'utf8');
+
+			if (contents.includes(packageName)) {
+				throw new Error(
+					`Function build artifact "${context}" references "${packageName}" in "${file}". Remove the dependency from the function bundle or configure it explicitly.`
+				);
+			}
+		}
+	}
+
+	private static async getFiles(dir: string): Promise<string[]> {
+		const entries = await readdir(dir, { withFileTypes: true });
+		const files = await Promise.all(
+			entries.map((entry) => {
+				const path = join(dir, entry.name);
+				return entry.isDirectory() ? ServicePackager.getFiles(path) : [path];
+			})
+		);
+
+		return files.flat();
+	}
+
 	/**
 	 * Build the API proxy using Rspack
 	 * @private
@@ -338,6 +372,8 @@ export class ServicePackager {
 							: []),
 					],
 				});
+
+				await ServicePackager.assertArtifactDoesNotReferencePackage(outdir, 'routing-controllers', dir);
 			})
 		);
 	}
@@ -356,7 +392,7 @@ export class ServicePackager {
 		if (buildOptions?.copyFiles) {
 			this.logger('Copying files...');
 
-			for await (const opts of buildOptions.copyFiles) {
+			for (const opts of buildOptions.copyFiles) {
 				await this.copyNonTranspiledFiles(opts, ServicePackager.config);
 			}
 		}
@@ -457,7 +493,7 @@ export class ServicePackager {
 	 * @param {LogColour} colour
 	 * @param context
 	 */
-	private logger = (msg: string, colour: LogColour = LogColour.Cyan, context?: string) => {
+	private readonly logger = (msg: string, colour: LogColour = LogColour.Cyan, context?: string) => {
 		const prefix = context ? `[${context}] ` : '';
 		console.log(`\x1b[${colour}m%s\x1b[0m`, `\n${prefix}${msg}`);
 	};
