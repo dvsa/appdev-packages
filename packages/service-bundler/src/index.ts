@@ -104,8 +104,8 @@ export class ServicePackager {
 		devtool: process.argv.includes('--source-map') ? 'source-map' : false,
 		externalsType: 'module',
 		externals: ['@babel/core', /^@babel\//],
-		experiments: {
-			outputModule: true,
+		output: {
+			module: true,
 		},
 		module: {
 			rules: [
@@ -312,14 +312,15 @@ export class ServicePackager {
 		await ServicePackager.build({
 			name: ServicePackager.proxyDetails.name,
 			entry: { index: `${proxyDir}/index.ts` },
+			...ServicePackager.coreBuildOptions,
 			output: {
+				...ServicePackager.coreBuildOptions.output,
 				path: join(process.cwd(), outdir),
 				filename: '[name].mjs',
 				library: {
 					type: 'module',
 				},
 			},
-			...ServicePackager.coreBuildOptions,
 		});
 	}
 
@@ -351,14 +352,15 @@ export class ServicePackager {
 				await ServicePackager.build({
 					name: dir,
 					entry: { index: entryPoint },
+					...ServicePackager.coreBuildOptions,
 					output: {
+						...ServicePackager.coreBuildOptions.output,
 						path: outdir,
 						filename: '[name].mjs',
 						library: {
 							type: 'module',
 						},
 					},
-					...ServicePackager.coreBuildOptions,
 
 					// exclude the packages needed for the API proxying
 					externalsType: 'module',
