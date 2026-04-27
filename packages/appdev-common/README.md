@@ -156,6 +156,75 @@ Example error response:
 }
 ```
 
+# AwsOIDCAzureTokenClient
+
+## Overview
+`AwsOIDCAzureTokenClient` handles federated authentication between AWS and Azure AD. It obtains an AWS OIDC web identity JWT via STS and exchanges it for an Azure AD access token using the client credentials grant with a JWT bearer assertion.
+
+This is useful for workloads running in AWS that need to authenticate against Azure AD-protected APIs without storing Azure client secrets.
+
+## Flow
+1. Calls AWS STS `GetWebIdentityToken` to obtain a signed JWT (RS256)
+2. Sends the JWT as a `client_assertion` to the Azure AD v2.0 token endpoint (`https://login.microsoftonline.com/{tenantId}/oauth2/v2.0/token`)
+3. Returns the Azure AD `access_token`
+4. Caches the token in-memory and reuses it until it expires (with configurable skew tolerance)
+
+## Usage
+
+### Importing the Class
+```ts
+import { AwsOIDCAzureTokenClient } from '@dvsa/appdev-api-common/auth/aws-oidc-azure-client';
+```
+
+### Initializing
+```ts
+const client = new AwsOIDCAzureTokenClient(
+  "your-azure-tenant-id",  // Azure AD tenant ID
+  "your-azure-client-id",  // Azure AD application (client) ID
+  300,                      // Token duration in seconds (default: 300)
+  {
+    debugMode: false,       // Log tokens & debug info (default: false)
+    forceFreshAuth: false,  // Skip cache, always fetch fresh (default: false)
+    expirySkewSeconds: 30,  // Treat token as expired N seconds early (default: 30)
+  }
+);
+```
+
+### Retrieving an Access Token
+```ts
+const token = await client.getAccessToken();
+```
+
+The token is cached statically — subsequent calls return the cached token until it expires (minus the skew window).
+
+## Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `debugMode` | `boolean` | `false` | Log debug messages and tokens. **Use with caution — can leak secrets.** |
+| `forceFreshAuth` | `boolean` | `false` | Skip token caching, always fetch a new token. |
+| `expirySkewSeconds` | `number` | `30` | Treat token as expired this many seconds before actual expiry to avoid clock skew issues. |
+
+## Error Handling
+- **STS did not return a WebIdentityToken**: AWS STS call failed or returned no token.
+- **Azure token endpoint error**: Azure AD rejected the token exchange (HTTP status and response body included in error).
+- **Error decoding access token**: Cached token could not be decoded — triggers a fresh fetch.
+
+```ts
+try {
+  const token = await client.getAccessToken();
+} catch (error) {
+  console.error("Azure federated auth failed:", error);
+}
+```
+
+## Prerequisites
+- The AWS environment must have OIDC federation configured (e.g., an EKS service account or Lambda with web identity role)
+- An Azure AD app registration with federated credentials trust configured to accept the AWS OIDC issuer
+- `@aws-sdk/client-sts` must be available (included as a dependency)
+
+---
+
 # ClientCredentials
 
 ## Overview
