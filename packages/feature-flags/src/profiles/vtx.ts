@@ -46,7 +46,7 @@ const defaultFeatureFlags = {
 		syncTestResultInfo: false,
 		updateStoreTechRecords: false,
 		updateStoreTestResults: false,
-		updateTestStation: false,
+		importTestStation: false,
 		updateTestVrm: false,
 	},
 
