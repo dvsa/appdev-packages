@@ -44,7 +44,7 @@ describe('app config configuration', () => {
 		expect(flags.skipAutomatedProcesses.syncTestResultInfo).toBe(false);
 		expect(flags.skipAutomatedProcesses.updateStoreTechRecords).toBe(false);
 		expect(flags.skipAutomatedProcesses.updateStoreTestResults).toBe(false);
-		expect(flags.skipAutomatedProcesses.updateTestStation).toBe(false);
+		expect(flags.skipAutomatedProcesses.importTestStation).toBe(false);
 		expect(flags.skipAutomatedProcesses.updateTestVrm).toBe(false);
 	});
 
