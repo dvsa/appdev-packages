@@ -140,11 +140,14 @@ export class AwsOIDCAzureTokenClient {
 	 * @returns {boolean} - Whether the access token is expired
 	 * @internal
 	 */
-	private static isAccessTokenExpired(skewSeconds: number): boolean {
+	public static isAccessTokenExpired(
+		skewSeconds: number,
+		token = AwsOIDCAzureTokenClient.accessToken,
+	): boolean {
 		let decodedAccessToken: JWTPayload;
 
 		try {
-			decodedAccessToken = decodeJwt(AwsOIDCAzureTokenClient.accessToken);
+			decodedAccessToken = decodeJwt(token);
 		} catch (err) {
 			console.error("Error decoding access token:", err);
 			return true;
