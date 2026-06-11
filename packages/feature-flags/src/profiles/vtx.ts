@@ -3,22 +3,7 @@ import { FeatureFlagsClientName } from '..';
 import { getFeatureFlags } from '../feature-flags';
 
 const defaultFeatureFlags = {
-	welshTranslation: {
-		enabled: true,
-		translatePassTestResult: true,
-		translateFailTestResult: true,
-		translatePrsTestResult: true,
-	},
-	issueDocsCentrally: {
-		enabled: true,
-	},
 	recallsApi: {
-		enabled: true,
-	},
-	automatedCt: {
-		enabled: false,
-	},
-	abandonedCerts: {
 		enabled: true,
 	},
 	specialistDefects: {
