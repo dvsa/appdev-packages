@@ -1,11 +1,32 @@
 import { stringify } from "node:querystring";
-import { decodeJwt } from "jose";
+import { type JWTPayload, decodeJwt } from "jose";
 
 export interface ClientCredentialsResponse {
 	token_type: string;
 	expires_in: number;
 	ext_expires_in: number;
 	access_token: string;
+}
+
+interface Options {
+	/**
+	 *
+	 * Whether to log debug messages & tokens during the token retrieval process.
+	 * Useful for troubleshooting and understanding the flow of operations.
+	 *
+	 * Use with Caution, this could leak secrets!
+	 */
+	debugMode?: boolean;
+	/**
+	 * Whether to skip any token caching and force fresh retrievals
+	 *
+	 */
+	forceFreshAuth?: boolean;
+	/**
+	 * Treat token as expired if it has less than this many seconds remaining.
+	 * Helps avoid clock skew / in-flight expiry. (Default 30 secs)
+	 */
+	expirySkewSeconds?: number;
 }
 
 export class ClientCredentials {
@@ -18,7 +39,8 @@ export class ClientCredentials {
 	 * @param clientId - The client id
 	 * @param clientSecret - The client secret
 	 * @param scope - The scope of the access token
-	 * @param debugMode - Whether to log debug messages
+	 * @param resource
+	 * @param options
 	 */
 	constructor(
 		private readonly tokenUrl: string,
@@ -26,7 +48,11 @@ export class ClientCredentials {
 		private readonly clientSecret: string,
 		private readonly scope: string | undefined,
 		private readonly resource: string | undefined,
-		private readonly debugMode: boolean = false,
+		private readonly options: Options = {
+			debugMode: false,
+			forceFreshAuth: false,
+			expirySkewSeconds: 30,
+		},
 	) {}
 
 	/**
@@ -35,14 +61,20 @@ export class ClientCredentials {
 	 * @returns {Promise<string>} - The access token
 	 */
 	public async getAccessToken(): Promise<string> {
-		if (!ClientCredentials.accessToken || this.isAccessTokenExpired()) {
+		if (
+			this.options?.forceFreshAuth ||
+			!ClientCredentials.accessToken ||
+			ClientCredentials.isAccessTokenExpired(
+				this.options.expirySkewSeconds ?? 30,
+			)
+		) {
 			const { access_token } = await this.fetchClientCredentials();
 
-			if (this.debugMode)
+			if (this.options?.debugMode)
 				console.log("[DEBUG] New access token fetched:", access_token);
 
 			ClientCredentials.accessToken = access_token;
-		} else if (this.debugMode) {
+		} else if (this.options?.debugMode) {
 			console.log(
 				"[DEBUG] Using existing access token:",
 				ClientCredentials.accessToken,
@@ -94,20 +126,22 @@ export class ClientCredentials {
 	 * @returns {boolean} - Whether the access token is expired
 	 * @private
 	 */
-	private isAccessTokenExpired(): boolean {
+	private static isAccessTokenExpired(skewSeconds: number): boolean {
+		let decodedAccessToken: JWTPayload;
+
 		try {
-			const decodedAccessToken = decodeJwt(ClientCredentials.accessToken);
-
-			const currentTime = new Date().getTime() / 1000;
-
-			// Check if exp exists before comparing as it can be undefined
-			if (!decodedAccessToken?.exp) {
-				return true;
-			}
-			return currentTime > decodedAccessToken.exp;
+			decodedAccessToken = decodeJwt(ClientCredentials.accessToken);
 		} catch (err) {
 			console.error("Error decoding access token:", err);
 			return true;
 		}
+
+		const currentTime = Math.floor(Date.now() / 1000);
+
+		const exp = decodedAccessToken?.exp;
+		if (!exp) return true;
+
+		// treat as expired if we're within the skew window
+		return currentTime >= exp - skewSeconds;
 	}
 }
