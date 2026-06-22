@@ -6,6 +6,7 @@ import {
 	HGV_TRL_RWT_TEST,
 	IVA_TEST,
 	LEC_TEST,
+	LOAD_STATUS_TEST,
 	MSVA_TEST,
 	PROHIBITION_CLEARANCE_TEST,
 	SPECIALIST_TEST_TYPE,
@@ -30,6 +31,7 @@ describe('validateTestTypeIdInList', () => {
 		const resultAbandonedTest = TestTypeHelper.validateTestTypeIdInList(VTG_VTP_12_TEST, '1');
 		const resultVoluntaryIvaTest = TestTypeHelper.validateTestTypeIdInList(VOLUNTARY_IVA_TEST, '191');
 		const resultSpecialistTest = TestTypeHelper.validateTestTypeIdInList(SPECIALIST_TEST_TYPE, '133');
+		const resultLoadStatusTest = TestTypeHelper.validateTestTypeIdInList(LOAD_STATUS_TEST, '94');
 
 		expect(resultLEC).toBe(true);
 		expect(resultADR).toBe(true);
@@ -44,6 +46,7 @@ describe('validateTestTypeIdInList', () => {
 		expect(resultAbandonedTest).toBe(true);
 		expect(resultVoluntaryIvaTest).toBe(true);
 		expect(resultSpecialistTest).toBe(true);
+		expect(resultLoadStatusTest).toBe(true);
 	});
 
 	it('should return false if test type id does not exist in list provided', () => {
@@ -60,6 +63,7 @@ describe('validateTestTypeIdInList', () => {
 		const resultAbandonedTest = TestTypeHelper.validateTestTypeIdInList(VTG_VTP_12_TEST, '0');
 		const resultVoluntaryIvaTest = TestTypeHelper.validateTestTypeIdInList(VOLUNTARY_IVA_TEST, '0');
 		const resultSpecialistTest = TestTypeHelper.validateTestTypeIdInList(SPECIALIST_TEST_TYPE, '0');
+		const resultLoadStatusTest = TestTypeHelper.validateTestTypeIdInList(LOAD_STATUS_TEST, '0');
 
 		expect(resultLEC).toBe(false);
 		expect(resultADR).toBe(false);
@@ -74,6 +78,7 @@ describe('validateTestTypeIdInList', () => {
 		expect(resultAbandonedTest).toBe(false);
 		expect(resultVoluntaryIvaTest).toBe(false);
 		expect(resultSpecialistTest).toBe(false);
+		expect(resultLoadStatusTest).toBe(false);
 	});
 });
 
