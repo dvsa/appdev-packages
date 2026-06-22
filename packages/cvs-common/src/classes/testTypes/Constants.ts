@@ -59,6 +59,10 @@ export const VOLUNTARY_IVA_TEST: ITestTypeList = {
 	IDS: ['153', '184', '190', '191', '196', '197', '185', '154'],
 };
 
+export const LOAD_STATUS_TEST: ITestTypeList = {
+	IDS: ['94', '40', '53', '98', '70', '107'],
+};
+
 export const PROHIBITION_CLEARANCE_TEST: ITestTypeList = {
 	IDS: [
 		// HGV
