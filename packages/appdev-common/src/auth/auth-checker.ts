@@ -28,10 +28,10 @@ export class JWTAuthChecker {
      * @param {string | string[]} roles
      * @returns {Promise<boolean>}
      */
-    async execute(
+    execute = async (
         {request}: Action,
         roles: string | string[] = [],
-    ): Promise<boolean> {
+    ): Promise<boolean> => {
         // if running locally, skip the token auth and role check
         if (
             process.env.IS_OFFLINE === "true" &&
