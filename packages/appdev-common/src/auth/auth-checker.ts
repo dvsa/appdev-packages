@@ -14,8 +14,8 @@ export class JWTAuthChecker {
 
     /**
      * Create a new instance of the JWTAuthChecker class
-     * @param clientId - the client id to validate the token against
-     * @param tenantId
+     * @param clientId - the client id(s) to validate the token against
+     * @param tenantId - the tenant id to validate the token against
      */
     public constructor(
         private readonly clientId: string | null = null,
