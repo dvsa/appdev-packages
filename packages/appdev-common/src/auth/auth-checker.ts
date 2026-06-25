@@ -50,7 +50,7 @@ export class JWTAuthChecker {
 			);
 		}
 
-		// create an instance of the JwtAuthoriser class, passing in clientId & tenantId if present
+		// create an instance of the JwtAuthoriser class, passing in clientId & tenantId
 		const authoriser = new JwtAuthoriser(this.clientId, this.tenantId);
 
 		// Validate the token and extract the roles from it

@@ -22,7 +22,7 @@ export class JwtAuthoriser {
 
 	/**
 	 * Create a new instance of the JwtAuthoriser class
-	 * @param clientIds - the client ids to validate the token against
+	 * @param clientIds - the client id(s) to validate the token against - can take a single string value or a comma-separated list in a string
 	 * @param tenantId - the tenant id to validate the token against
 	 */
 	public constructor(
