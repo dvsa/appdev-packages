@@ -1,7 +1,11 @@
 {
 	"name": "@dvsa/appdev-api-common",
-	"version": "2.0.0",
-	"keywords": ["dvsa", "nodejs", "typescript"],
+	"version": "2.0.1",
+	"keywords": [
+		"dvsa",
+		"nodejs",
+		"typescript"
+	],
 	"author": "DVSA",
 	"repository": {
 		"type": "git",

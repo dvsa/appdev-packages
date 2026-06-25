@@ -49,11 +49,11 @@ Then in the project you wish to use this package, run:
 Once you've completed your local testing and/or to start again from scratch, you can run:
 `npm unlink @dvsa/appdev-api-common`
 
-# Contents
+# *Contents*
 
-## JWTAuthChecker
+# JWTAuthChecker
 
-### Overview
+## Overview
 `JWTAuthChecker` is a utility class for verifying JSON Web Tokens (JWT) and enforcing role-based access control (RBAC) in an Express application using `routing-controllers`.
 
 It performs authentication by extracting the JWT from the request headers, verifying its validity, and checking whether the user has the required roles to access a resource.
@@ -63,8 +63,28 @@ It performs authentication by extracting the JWT from the request headers, verif
 ### Example Usage in a Controller
 The `JWTAuthChecker.execute` method can be used in conjunction with the `@Authorized` decorator to enforce authentication and role-based access.
 
-#### Basic Authentication Check
+### Basic Authentication Check
 In the entry point to your service/application e.g. `src/index.ts`, bind the `JWTAuthChecker.execute` method to the `authorizationChecker` option in the `createExpressServer` function.
+
+The `JWTAuthChecker` should be instantiated by passing in String-value parameters of `clientId` and `tenantId`, meaning the method will validate the tenant and reject non-prod tokens being used in Prod requests (and vice versa). 
+This is the recommended way of using the JwtAuthChecker.
+```ts
+// ...other imports
+import { JWTAuthChecker } from '@dvsa/appdev-api-common';
+import { MyResource } from '@resources/MyResource';
+import { createExpressServer } from 'routing-controllers';
+
+const jwtAuth = new JWTAuthChecker(process.env.clientId, process.env.tenantId);
+
+export const app = createExpressServer({
+   cors: true,
+   defaultErrorHandler: false,
+   controllers: [MyResource],
+   authorizationChecker: jwtAuth.execute,
+});
+```
+
+These params don't *have* to be passed in to the constructor, but the method will be unable to validate the token with regards to the client & tenant, and will only check the validity/expiry.
 ```ts
 // ...other imports
 import { JWTAuthChecker } from '@dvsa/appdev-api-common';
@@ -78,7 +98,6 @@ export const app = createExpressServer({
    authorizationChecker: JWTAuthChecker.execute,
 });
 ```
-
 
 If no roles are required, the function will simply verify the JWT token.
 
@@ -95,7 +114,7 @@ export class ExampleController {
 }
 ```
 
-#### Role-Based Access Control
+### Role-Based Access Control
 If specific roles are required, they can be passed as an argument.
 
 ```ts
@@ -128,7 +147,7 @@ async function checkUserAuthorization(action: Action) {
 ```
 
 ## Environment Variables
-The behavior of the authentication check can be controlled using environment variables:
+The behaviour of the authentication check can be controlled using environment variables:
 
 - `IS_OFFLINE`: If set to `true`, the authentication check is bypassed (useful for local development).
 - `FORCE_LOCAL_AUTH`: If set to `true`, authentication is enforced even in offline mode.
@@ -155,7 +174,7 @@ Example error response:
   "code": "UNAUTHORIZED"
 }
 ```
-
+---
 # AwsOIDCAzureTokenClient
 
 ## Overview
@@ -290,7 +309,7 @@ try {
   console.error("Authentication error:", error);
 }
 ```
-
+---
 # DateTime
 
 ## Overview
@@ -375,7 +394,7 @@ const invalidDate = new DateTime("invalid-date");
 console.log(invalidDate.toString()); // Returns an invalid date string
 ```
 
-
+---
 # Compression
 
 ## Overview

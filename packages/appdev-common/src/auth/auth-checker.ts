@@ -9,18 +9,27 @@ export type RoutingControllersRequest = Request & {
 	apiGateway: APIGatewayModel;
 };
 
-// biome-ignore lint/complexity/noStaticOnlyClass: this class will be extended in the future
 export class JWTAuthChecker {
+	/**
+	 * Create a new instance of the JWTAuthChecker class
+	 * @param clientId - the client id(s) to validate the token against
+	 * @param tenantId - the tenant id to validate the token against
+	 */
+	public constructor(
+		private readonly clientId: string | null = null,
+		private readonly tenantId: string | null = null,
+	) {}
+
 	/**
 	 * Perform a JWT token verification and role check
 	 * @param {RoutingControllersRequest} request
 	 * @param {string | string[]} roles
 	 * @returns {Promise<boolean>}
 	 */
-	static async execute(
+	execute = async (
 		{ request }: Action,
 		roles: string | string[] = [],
-	): Promise<boolean> {
+	): Promise<boolean> => {
 		// if running locally, skip the token auth and role check
 		if (
 			process.env.IS_OFFLINE === "true" &&
@@ -41,8 +50,8 @@ export class JWTAuthChecker {
 			);
 		}
 
-		// create an instance of the JwtAuthoriser class
-		const authoriser = new JwtAuthoriser();
+		// create an instance of the JwtAuthoriser class, passing in clientId & tenantId
+		const authoriser = new JwtAuthoriser(this.clientId, this.tenantId);
 
 		// Validate the token and extract the roles from it
 		const { roles: tokenRoles } = await authoriser.verify(token);
@@ -80,5 +89,5 @@ export class JWTAuthChecker {
 		}
 
 		return true;
-	}
+	};
 }

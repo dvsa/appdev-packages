@@ -8,7 +8,8 @@ import { HttpStatus } from "../api/http-status-codes";
 import { AuthError } from "./auth-errors";
 
 export class JwtAuthoriser {
-	private readonly clientId: string | null;
+	private readonly clientIds: string | null;
+	private readonly tenantId: string | null;
 	private static readonly ENV = process.env.environment?.toUpperCase() ?? "";
 	private static readonly tokenExpiryEnvExclusionList = [
 		"DEVELOPMENT",
@@ -21,10 +22,15 @@ export class JwtAuthoriser {
 
 	/**
 	 * Create a new instance of the JwtAuthoriser class
-	 * @param clientId - the client id to validate the token against
+	 * @param clientIds - the client id(s) to validate the token against - can take a single string value or a comma-separated list in a string
+	 * @param tenantId - the tenant id to validate the token against
 	 */
-	public constructor(clientId: string | null = null) {
-		this.clientId = clientId;
+	public constructor(
+		clientIds: string | null = null,
+		tenantId: string | null = null,
+	) {
+		this.clientIds = clientIds;
+		this.tenantId = tenantId;
 	}
 
 	/**
@@ -39,9 +45,20 @@ export class JwtAuthoriser {
 				algorithms: ["RS256"],
 			};
 
+			// audience validation is handled automatically if present in token
+			if (this.clientIds?.length) {
+				opts.audience = this.clientIds
+					.split(",")
+					.map((id) => id.trim())
+					.filter(Boolean);
+			}
+
 			// issuer validation is handled automatically if present in token
-			if (this.clientId) {
-				opts.audience = this.clientId;
+			if (this.tenantId) {
+				opts.issuer = [
+					`https://sts.windows.net/${this.tenantId}/`,
+					`https://login.microsoftonline.com/${this.tenantId}/v2.0`,
+				];
 			}
 
 			if (
