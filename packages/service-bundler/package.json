@@ -1,6 +1,6 @@
 {
   "name": "@dvsa/service-bundler",
-  "version": "3.2.0",
+  "version": "3.3.0",
   "author": "DVSA",
   "license": "ISC",
   "repository": {
@@ -23,7 +23,7 @@
     "postpublish": "git clean -fd && npm run clean:temp"
   },
   "dependencies": {
-    "@rspack/core": "2.0.0",
+    "@rspack/core": "2.1.0",
     "fs-extra": "^11.3.0",
     "val-loader": "^6.0.0",
     "zip-lib": "^1.1.2"
