@@ -15,10 +15,13 @@ export class JwtAuthoriser {
 		"DEVELOPMENT",
 		"NON-PROD",
 	];
-	private static readonly JWKS_URI = new URL(
-		"https://login.microsoftonline.com/common/discovery/keys",
-	);
-	private static JWKS = createRemoteJWKSet(JwtAuthoriser.JWKS_URI);
+	private static readonly DEFAULT_TENANT = "common";
+	private static readonly MICROSOFT_LOGIN_BASE_URL =
+		"https://login.microsoftonline.com";
+	private static readonly jwksByTenant = new Map<
+		string,
+		ReturnType<typeof createRemoteJWKSet>
+	>();
 
 	/**
 	 * Create a new instance of the JwtAuthoriser class
@@ -31,6 +34,31 @@ export class JwtAuthoriser {
 	) {
 		this.clientIds = clientIds;
 		this.tenantId = tenantId;
+	}
+
+	private static getTenantSegment(tenantId: string | null): string {
+		return tenantId?.trim() || JwtAuthoriser.DEFAULT_TENANT;
+	}
+
+	private static getJwks(
+		tenantId: string | null,
+	): ReturnType<typeof createRemoteJWKSet> {
+		const tenantSegment = JwtAuthoriser.getTenantSegment(tenantId);
+		const cachedJwks = JwtAuthoriser.jwksByTenant.get(tenantSegment);
+
+		if (cachedJwks) {
+			return cachedJwks;
+		}
+
+		const jwks = createRemoteJWKSet(
+			new URL(
+				`${JwtAuthoriser.MICROSOFT_LOGIN_BASE_URL}/${tenantSegment}/discovery/keys`,
+			),
+		);
+
+		JwtAuthoriser.jwksByTenant.set(tenantSegment, jwks);
+
+		return jwks;
 	}
 
 	/**
@@ -67,7 +95,11 @@ export class JwtAuthoriser {
 				opts.maxTokenAge = Number.POSITIVE_INFINITY;
 			}
 
-			const { payload } = await jwtVerify(token, JwtAuthoriser.JWKS, opts);
+			const { payload } = await jwtVerify(
+				token,
+				JwtAuthoriser.getJwks(this.tenantId),
+				opts,
+			);
 
 			return payload;
 		} catch (err) {
