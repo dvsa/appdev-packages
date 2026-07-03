@@ -18,6 +18,7 @@ describe('app config configuration', () => {
 		expect(flags.specialistDefects.adasImNumbers).toEqual([29]);
 		expect(flags.specialistDefects.includeOnCertificates).toBe(false);
 		expect(flags.specialistDefects.includeOnEnquiry).toBe(false);
+		expect(flags.specialistDefects.skipAdasExport).toBe(false);
 		expect(flags.skipAutomatedProcesses.enabled).toBe(false);
 		expect(flags.skipAutomatedProcesses.atfReportGen).toBe(false);
 		expect(flags.skipAutomatedProcesses.centralDocsNotify).toBe(false);
@@ -50,6 +51,7 @@ describe('app config configuration', () => {
 				adasImNumbers: [29, 99],
 				includeOnCertificates: true,
 				includeOnEnquiry: true,
+				skipAdasExport: true,
 			},
 			skipAutomatedProcesses: {
 				enabled: true,
@@ -68,6 +70,7 @@ describe('app config configuration', () => {
 		expect(flags.specialistDefects.adasImNumbers).toEqual([29, 99]);
 		expect(flags.specialistDefects.includeOnCertificates).toBe(true);
 		expect(flags.specialistDefects.includeOnEnquiry).toBe(true);
+		expect(flags.specialistDefects.skipAdasExport).toBe(true);
 		expect(flags.skipAutomatedProcesses.enabled).toBe(true);
 		expect(flags.skipAutomatedProcesses.certGovNotify).toBe(true);
 		expect(flags.skipAutomatedProcesses.exportAnts).toBe(true);

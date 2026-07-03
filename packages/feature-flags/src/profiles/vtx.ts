@@ -11,6 +11,7 @@ const defaultFeatureFlags = {
 		adasImNumbers: [29],
 		includeOnCertificates: false,
 		includeOnEnquiry: false,
+		skipAdasExport: false,
 	},
 	skipAutomatedProcesses: {
 		enabled: false,
