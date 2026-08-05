@@ -1,3 +1,5 @@
+// biome-ignore-all lint/suspicious/noConsole: intentional logging
+
 import 'reflect-metadata';
 import fs from 'node:fs/promises';
 import { join } from 'node:path';
@@ -196,7 +198,6 @@ export class TypescriptToOpenApiSpec {
 		// Sanitise schemas
 		for (const schema of Object.values(finalSpec.components?.schemas ?? {})) {
 			if ('properties' in schema && schema?.properties?.undefined) {
-				// biome-ignore lint/performance/noDelete: Fine here
 				delete schema.properties.undefined;
 			}
 
@@ -276,7 +277,7 @@ export class TypescriptToOpenApiSpec {
 				const schema = generator.createSchema(config.type);
 
 				return {
-					// biome-ignore lint/performance/noAccumulatingSpread: <explanation>
+					// biome-ignore lint/performance/noAccumulatingSpread: ignoring
 					...acc,
 					definitions: {
 						...acc.definitions,

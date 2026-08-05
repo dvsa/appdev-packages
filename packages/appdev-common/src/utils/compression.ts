@@ -1,6 +1,5 @@
 import { gunzipSync, gzipSync } from 'node:zlib';
 
-// biome-ignore lint/complexity/noStaticOnlyClass: Valid use case for a static class
 export class DataCompression {
 	/**
 	 * Extracts a compressed (in base64) string using gunzip into a JSON object

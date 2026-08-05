@@ -1,3 +1,5 @@
+// biome-ignore-all lint/suspicious/noConsole: intentional logging
+
 import { type Dirent, existsSync, readdirSync } from 'node:fs';
 import { readdir, readFile, stat } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
@@ -234,7 +236,7 @@ export class ServicePackager {
 	 * @param {RspackOptions} options
 	 * @private
 	 */
-	private static build(options: RspackOptions): Promise<Stats | undefined> {
+	private static buildArtefact(options: RspackOptions): Promise<Stats | undefined> {
 		return new Promise((resolve, reject) => {
 			rspack(options, (err, stats) => {
 				if (err) {
@@ -309,7 +311,7 @@ export class ServicePackager {
 
 		const outdir = `${ServicePackager.config.buildOutputDir}/src/proxy`;
 
-		await ServicePackager.build({
+		await ServicePackager.buildArtefact({
 			name: ServicePackager.proxyDetails.name,
 			entry: { index: `${proxyDir}/index.ts` },
 			...ServicePackager.coreBuildOptions,
@@ -349,7 +351,7 @@ export class ServicePackager {
 
 				this.logger('Starting build...', LogColour.Cyan, dir);
 
-				await ServicePackager.build({
+				await ServicePackager.buildArtefact({
 					name: dir,
 					entry: { index: entryPoint },
 					...ServicePackager.coreBuildOptions,

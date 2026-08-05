@@ -1,6 +1,6 @@
 {
   "name": "@dvsa/database-helpers",
-  "version": "1.0.1",
+  "version": "2.0.0",
   "description": "Common package to be used for database operations",
   "author": "DVSA",
   "license": "ISC",

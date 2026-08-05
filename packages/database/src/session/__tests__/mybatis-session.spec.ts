@@ -63,8 +63,11 @@ describe('MyBatisSession', () => {
 
 		const results = await mockSession.query('testMapper', {});
 		expect(MyBatis.getStatement).toHaveBeenCalledWith('testNamespace', 'testMapper', {}, expect.anything());
+		// biome-ignore lint/suspicious/noConsole: testing log
 		expect(console.log).toHaveBeenCalledWith('*** Query for namespace: testNamespace & mapperID: testMapper ***');
+		// biome-ignore lint/suspicious/noConsole: testing log
 		expect(console.log).toHaveBeenCalledWith('Mock SQL Statement');
+		// biome-ignore lint/suspicious/noConsole: testing log
 		expect(console.log).toHaveBeenCalledWith('\n***');
 		expect(mockConnection.query).toHaveBeenCalledWith('Mock SQL Statement');
 		expect(results).toEqual([]);
@@ -95,6 +98,7 @@ describe('MyBatisSession', () => {
 		jest.spyOn(mockSession, 'selectList').mockRejectedValue(new Error('Test Error'));
 
 		const results = await mockSession.selectAndCatchSilently('testMapper', {}, class {});
+		// biome-ignore lint/suspicious/noConsole: testing log
 		expect(console.error).toHaveBeenCalledWith('[ERROR]: selectAndCatchSilently', expect.any(Error));
 		expect(results).toEqual([]);
 		consoleSpy.mockRestore(); // Restore console.error after this test

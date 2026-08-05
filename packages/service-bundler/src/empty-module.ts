@@ -1,3 +1,5 @@
+// biome-ignore-all lint/suspicious/noConsole: intentional logging
+
 /**
  * This file is an empty module that provides a no-operation (noop) function.
  *
@@ -14,8 +16,8 @@
 
 // @ts-nocheck
 const noop =
-	(name) =>
-	(...args) => {
+	(_name) =>
+	(..._args) => {
 		return (..._) => {}; // Safe decorator shape: () => () => {}
 	};
 

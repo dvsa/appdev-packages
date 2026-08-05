@@ -68,11 +68,13 @@ export class AwsOIDCAzureTokenClient {
 			const { access_token } = await this.fetchFederatedCredentials();
 
 			if (this.options?.debugMode) {
+				// biome-ignore lint/suspicious/noConsole: intentional debug logging
 				console.log('[DEBUG] New Azure access token fetched:', access_token);
 			}
 
 			AwsOIDCAzureTokenClient.accessToken = access_token;
 		} else if (this.options?.debugMode) {
+			// biome-ignore lint/suspicious/noConsole: intentional debug logging
 			console.log('[DEBUG] Using existing Azure access token:', AwsOIDCAzureTokenClient.accessToken);
 		}
 
@@ -100,6 +102,7 @@ export class AwsOIDCAzureTokenClient {
 		}
 
 		if (this.options?.debugMode) {
+			// biome-ignore lint/suspicious/noConsole: intentional debug logging
 			console.log('[DEBUG] AWS JWT obtained', awsJwt);
 		}
 
@@ -135,6 +138,7 @@ export class AwsOIDCAzureTokenClient {
 		try {
 			decodedAccessToken = decodeJwt(AwsOIDCAzureTokenClient.accessToken);
 		} catch (err) {
+			// biome-ignore lint/suspicious/noConsole: intentional error logging
 			console.error('Error decoding access token:', err);
 			return true;
 		}

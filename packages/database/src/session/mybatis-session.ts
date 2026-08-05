@@ -49,8 +49,11 @@ export class MyBatisSession {
 		}
 
 		if (this.debugMode) {
+			// biome-ignore lint/suspicious/noConsole: intentional info logging
 			console.log(`*** Query for namespace: ${this.namespace} & mapperID: ${mapperId} ***`);
+			// biome-ignore lint/suspicious/noConsole: intentional info logging
 			console.log(query);
+			// biome-ignore lint/suspicious/noConsole: intentional info logging
 			console.log('\n***');
 		}
 
@@ -110,6 +113,7 @@ export class MyBatisSession {
 		try {
 			return await this.selectList(mapperId, params, model);
 		} catch (error) {
+			// biome-ignore lint/suspicious/noConsole: intentional error logging
 			console.error('[ERROR]: selectAndCatchSilently', error);
 			return [];
 		}
@@ -137,8 +141,11 @@ export class MyBatisSession {
 		}
 
 		if (this.debugMode) {
+			// biome-ignore lint/suspicious/noConsole: intentional info logging
 			console.log(`*** Execute for namespace: ${this.namespace} & mapperID: ${mapperId} ***`);
+			// biome-ignore lint/suspicious/noConsole: intentional info logging
 			console.log(query);
+			// biome-ignore lint/suspicious/noConsole: intentional info logging
 			console.log('\n***');
 		}
 

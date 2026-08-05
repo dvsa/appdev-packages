@@ -68,10 +68,14 @@ export class ClientCredentials {
 		) {
 			const { access_token } = await this.fetchClientCredentials();
 
-			if (this.options?.debugMode) console.log('[DEBUG] New access token fetched:', access_token);
+			if (this.options?.debugMode) {
+				// biome-ignore lint/suspicious/noConsole: intentional debug logging
+				console.log('[DEBUG] New access token fetched:', access_token);
+			}
 
 			ClientCredentials.accessToken = access_token;
 		} else if (this.options?.debugMode) {
+			// biome-ignore lint/suspicious/noConsole: intentional error logging
 			console.log('[DEBUG] Using existing access token:', ClientCredentials.accessToken);
 		}
 		return ClientCredentials.accessToken;
@@ -104,6 +108,7 @@ export class ClientCredentials {
 
 		if (!response.ok) {
 			const errorBody = await response.text();
+			// biome-ignore lint/suspicious/noConsole: intentional error logging
 			console.error('Error fetching client credentials', response.status, errorBody);
 			throw new Error('Failed to fetch client credentials');
 		}
@@ -122,6 +127,7 @@ export class ClientCredentials {
 		try {
 			decodedAccessToken = decodeJwt(ClientCredentials.accessToken);
 		} catch (err) {
+			// biome-ignore lint/suspicious/noConsole: intentional error logging
 			console.error('Error decoding access token:', err);
 			return true;
 		}

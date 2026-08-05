@@ -19,7 +19,6 @@ export class HTTPError extends Error {
 	}
 }
 
-// biome-ignore lint/complexity/noStaticOnlyClass: makes sense for an HTTP utility to encompass all methods
 export class HTTP {
 	/**
 	 * Performs an HTTP GET request.
@@ -147,6 +146,7 @@ export class HTTP {
 				body = await clonedResponse.text();
 			}
 		} catch (error) {
+			// biome-ignore lint/suspicious/noConsole: intentional error logging
 			console.error('Serialisation error:', error);
 			body = null;
 		}
