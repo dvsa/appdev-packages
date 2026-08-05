@@ -1,6 +1,5 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { ScanCommand, type ScanCommandInput } from '@aws-sdk/lib-dynamodb';
-import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
+import { DynamoDBDocumentClient, ScanCommand, type ScanCommandInput } from '@aws-sdk/lib-dynamodb';
 import { DynamoDb } from '../dynamo-db-client';
 
 // Mock the AWS SDK dependencies

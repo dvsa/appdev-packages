@@ -1,5 +1,5 @@
-import { GetWebIdentityTokenCommand, STSClient } from "@aws-sdk/client-sts";
-import { type JWTPayload, decodeJwt } from "jose";
+import { GetWebIdentityTokenCommand, STSClient } from '@aws-sdk/client-sts';
+import { decodeJwt, type JWTPayload } from 'jose';
 
 export interface AzureTokenResponse {
 	token_type: string;
@@ -48,7 +48,7 @@ export class AwsOIDCAzureTokenClient {
 			debugMode: false,
 			forceFreshAuth: false,
 			expirySkewSeconds: 30,
-		},
+		}
 	) {}
 
 	/**
@@ -63,22 +63,17 @@ export class AwsOIDCAzureTokenClient {
 		if (
 			this.options?.forceFreshAuth ||
 			!AwsOIDCAzureTokenClient.accessToken ||
-			AwsOIDCAzureTokenClient.isAccessTokenExpired(
-				this.options.expirySkewSeconds ?? 30,
-			)
+			AwsOIDCAzureTokenClient.isAccessTokenExpired(this.options.expirySkewSeconds ?? 30)
 		) {
 			const { access_token } = await this.fetchFederatedCredentials();
 
 			if (this.options?.debugMode) {
-				console.log("[DEBUG] New Azure access token fetched:", access_token);
+				console.log('[DEBUG] New Azure access token fetched:', access_token);
 			}
 
 			AwsOIDCAzureTokenClient.accessToken = access_token;
 		} else if (this.options?.debugMode) {
-			console.log(
-				"[DEBUG] Using existing Azure access token:",
-				AwsOIDCAzureTokenClient.accessToken,
-			);
+			console.log('[DEBUG] Using existing Azure access token:', AwsOIDCAzureTokenClient.accessToken);
 		}
 
 		return AwsOIDCAzureTokenClient.accessToken;
@@ -93,43 +88,37 @@ export class AwsOIDCAzureTokenClient {
 		const stsResponse = await AwsOIDCAzureTokenClient.stsClient.send(
 			new GetWebIdentityTokenCommand({
 				Audience: [this.clientId],
-				SigningAlgorithm: "RS256",
+				SigningAlgorithm: 'RS256',
 				DurationSeconds: this.tokenDurationSeconds,
-			}),
+			})
 		);
 
 		const awsJwt = stsResponse?.WebIdentityToken;
 
 		if (!awsJwt) {
-			throw new Error("STS did not return a WebIdentityToken");
+			throw new Error('STS did not return a WebIdentityToken');
 		}
 
 		if (this.options?.debugMode) {
-			console.log("[DEBUG] AWS JWT obtained", awsJwt);
+			console.log('[DEBUG] AWS JWT obtained', awsJwt);
 		}
 
 		const searchParams = new URLSearchParams({
-			grant_type: "client_credentials",
+			grant_type: 'client_credentials',
 			client_id: this.clientId,
-			client_assertion_type:
-				"urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+			client_assertion_type: 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer',
 			client_assertion: awsJwt,
 			scope: `api://${this.clientId}/.default`,
 		});
 
-		const response = await fetch(
-			`https://login.microsoftonline.com/${this.tenantId}/oauth2/v2.0/token`,
-			{
-				method: "POST",
-				headers: { "Content-Type": "application/x-www-form-urlencoded" },
-				body: searchParams.toString(),
-			},
-		);
+		const response = await fetch(`https://login.microsoftonline.com/${this.tenantId}/oauth2/v2.0/token`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+			body: searchParams.toString(),
+		});
 
 		if (!response.ok) {
-			throw new Error(
-				`Azure token endpoint error: HTTP ${response.status} - ${await response.text()}`,
-			);
+			throw new Error(`Azure token endpoint error: HTTP ${response.status} - ${await response.text()}`);
 		}
 
 		return await response.json();
@@ -146,7 +135,7 @@ export class AwsOIDCAzureTokenClient {
 		try {
 			decodedAccessToken = decodeJwt(AwsOIDCAzureTokenClient.accessToken);
 		} catch (err) {
-			console.error("Error decoding access token:", err);
+			console.error('Error decoding access token:', err);
 			return true;
 		}
 

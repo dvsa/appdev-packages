@@ -1,7 +1,7 @@
 import { type Dirent, existsSync, readdirSync } from 'node:fs';
-import { readFile, readdir, stat } from 'node:fs/promises';
+import { readdir, readFile, stat } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
-import { DefinePlugin, type RspackOptions, Stats, rspack } from '@rspack/core';
+import { DefinePlugin, type RspackOptions, rspack, Stats } from '@rspack/core';
 import { copy } from 'fs-extra';
 import { archiveFolder } from 'zip-lib';
 

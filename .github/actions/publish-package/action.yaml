@@ -22,7 +22,7 @@ runs:
       run: echo "NVMRC=$(cat .nvmrc)" >> $GITHUB_ENV
 
     - name: ⚙️ Setup Node.js ${{ env.NVMRC }}
-      uses: actions/setup-node@v6
+      uses: actions/setup-node@v7
       with:
         node-version: ${{ env.NVMRC }}
         cache: 'npm'
@@ -32,10 +32,6 @@ runs:
       run: echo "//registry.npmjs.org/:_authToken=$ACCESS_TOKEN" >> ~/.npmrc
       env:
         ACCESS_TOKEN: ${{ inputs.token }}
-
-    - name: Update npm to latest version for OIDC support
-      shell: bash
-      run: npm install -g npm@latest
 
     - name: ➕ Install dependencies
       shell: bash

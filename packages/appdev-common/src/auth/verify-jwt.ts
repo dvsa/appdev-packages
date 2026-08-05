@@ -1,37 +1,22 @@
-import {
-	type JWTPayload,
-	type JWTVerifyOptions,
-	createRemoteJWKSet,
-	jwtVerify,
-} from "jose";
-import { HttpStatus } from "../api/http-status-codes";
-import { AuthError } from "./auth-errors";
+import { createRemoteJWKSet, type JWTPayload, type JWTVerifyOptions, jwtVerify } from 'jose';
+import { HttpStatus } from '../api/http-status-codes';
+import { AuthError } from './auth-errors';
 
 export class JwtAuthoriser {
 	private readonly clientIds: string | null;
 	private readonly tenantId: string | null;
-	private static readonly ENV = process.env.environment?.toUpperCase() ?? "";
-	private static readonly tokenExpiryEnvExclusionList = [
-		"DEVELOPMENT",
-		"NON-PROD",
-	];
-	private static readonly DEFAULT_TENANT = "common";
-	private static readonly MICROSOFT_LOGIN_BASE_URL =
-		"https://login.microsoftonline.com";
-	private static readonly jwksByTenant = new Map<
-		string,
-		ReturnType<typeof createRemoteJWKSet>
-	>();
+	private static readonly ENV = process.env.environment?.toUpperCase() ?? '';
+	private static readonly tokenExpiryEnvExclusionList = ['DEVELOPMENT', 'NON-PROD'];
+	private static readonly DEFAULT_TENANT = 'common';
+	private static readonly MICROSOFT_LOGIN_BASE_URL = 'https://login.microsoftonline.com';
+	private static readonly jwksByTenant = new Map<string, ReturnType<typeof createRemoteJWKSet>>();
 
 	/**
 	 * Create a new instance of the JwtAuthoriser class
 	 * @param clientIds - the client id(s) to validate the token against - can take a single string value or a comma-separated list in a string
 	 * @param tenantId - the tenant id to validate the token against
 	 */
-	public constructor(
-		clientIds: string | null = null,
-		tenantId: string | null = null,
-	) {
+	public constructor(clientIds: string | null = null, tenantId: string | null = null) {
 		this.clientIds = clientIds;
 		this.tenantId = tenantId;
 	}
@@ -40,9 +25,7 @@ export class JwtAuthoriser {
 		return tenantId?.trim() || JwtAuthoriser.DEFAULT_TENANT;
 	}
 
-	private static getJwks(
-		tenantId: string | null,
-	): ReturnType<typeof createRemoteJWKSet> {
+	private static getJwks(tenantId: string | null): ReturnType<typeof createRemoteJWKSet> {
 		const tenantSegment = JwtAuthoriser.getTenantSegment(tenantId);
 		const cachedJwks = JwtAuthoriser.jwksByTenant.get(tenantSegment);
 
@@ -51,9 +34,7 @@ export class JwtAuthoriser {
 		}
 
 		const jwks = createRemoteJWKSet(
-			new URL(
-				`${JwtAuthoriser.MICROSOFT_LOGIN_BASE_URL}/${tenantSegment}/discovery/keys`,
-			),
+			new URL(`${JwtAuthoriser.MICROSOFT_LOGIN_BASE_URL}/${tenantSegment}/discovery/keys`)
 		);
 
 		JwtAuthoriser.jwksByTenant.set(tenantSegment, jwks);
@@ -70,13 +51,13 @@ export class JwtAuthoriser {
 		try {
 			const opts: JWTVerifyOptions = {
 				clockTolerance: 10,
-				algorithms: ["RS256"],
+				algorithms: ['RS256'],
 			};
 
 			// audience validation is handled automatically if present in token
 			if (this.clientIds?.length) {
 				opts.audience = this.clientIds
-					.split(",")
+					.split(',')
 					.map((id) => id.trim())
 					.filter(Boolean);
 			}
@@ -89,29 +70,19 @@ export class JwtAuthoriser {
 				];
 			}
 
-			if (
-				JwtAuthoriser.tokenExpiryEnvExclusionList.includes(JwtAuthoriser.ENV)
-			) {
+			if (JwtAuthoriser.tokenExpiryEnvExclusionList.includes(JwtAuthoriser.ENV)) {
 				opts.maxTokenAge = Number.POSITIVE_INFINITY;
 			}
 
-			const { payload } = await jwtVerify(
-				token,
-				JwtAuthoriser.getJwks(this.tenantId),
-				opts,
-			);
+			const { payload } = await jwtVerify(token, JwtAuthoriser.getJwks(this.tenantId), opts);
 
 			return payload;
 		} catch (err) {
 			const error = err as { code?: string };
 
-			const code = "code" in error ? error.code : "";
+			const code = 'code' in error ? error.code : '';
 
-			throw new AuthError(
-				HttpStatus.UNAUTHORIZED,
-				(err as Error).message,
-				code,
-			);
+			throw new AuthError(HttpStatus.UNAUTHORIZED, (err as Error).message, code);
 		}
 	}
 }

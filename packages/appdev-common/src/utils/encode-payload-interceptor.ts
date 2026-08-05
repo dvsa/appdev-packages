@@ -1,8 +1,8 @@
-import type { Logger } from "@aws-lambda-powertools/logger";
-import type { APIGatewayProxyResult } from "aws-lambda";
-import type { Request, Response } from "express";
-import { HttpStatus } from "../api/http-status-codes";
-import { DataCompression } from "./compression";
+import type { Logger } from '@aws-lambda-powertools/logger';
+import type { APIGatewayProxyResult } from 'aws-lambda';
+import type { Request, Response } from 'express';
+import { HttpStatus } from '../api/http-status-codes';
+import { DataCompression } from './compression';
 
 /**
  * Interceptor to encode the response payload if requested by the client
@@ -14,9 +14,9 @@ import { DataCompression } from "./compression";
 export const EncodePayloadInterceptor = (
 	{ response, request }: { response: Response; request: Request },
 	content: Partial<APIGatewayProxyResult>,
-	logger: Logger,
+	logger: Logger
 ) => {
-	const compressionHeaderValue = "base64+gzip";
+	const compressionHeaderValue = 'base64+gzip';
 
 	for (const [header, value] of Object.entries(content?.headers || {})) {
 		response.setHeader(header, value as string);
@@ -31,41 +31,35 @@ export const EncodePayloadInterceptor = (
 		return response;
 	}
 
-	const didRequestCompressed =
-		request?.headers?.["x-accept-encoding"] === compressionHeaderValue;
+	const didRequestCompressed = request?.headers?.['x-accept-encoding'] === compressionHeaderValue;
 
-	const shouldCompress =
-		didRequestCompressed && content.statusCode === HttpStatus.OK;
+	const shouldCompress = didRequestCompressed && content.statusCode === HttpStatus.OK;
 
 	// Parse the body if it's a string
-	const bodyData =
-		typeof content.body === "string" ? JSON.parse(content.body) : content.body;
+	const bodyData = typeof content.body === 'string' ? JSON.parse(content.body) : content.body;
 
 	if (shouldCompress) {
-		logger.debug("Compressing response data");
+		logger.debug('Compressing response data');
 
 		try {
 			const compressedData = DataCompression.compress(bodyData);
 
 			// Check if compressed data is actually smaller
-			const originalSize = Buffer.byteLength(JSON.stringify(bodyData), "utf8");
-			const compressedSize = Buffer.byteLength(
-				JSON.stringify(compressedData),
-				"utf8",
-			);
+			const originalSize = Buffer.byteLength(JSON.stringify(bodyData), 'utf8');
+			const compressedSize = Buffer.byteLength(JSON.stringify(compressedData), 'utf8');
 
 			if (compressedSize >= originalSize) {
-				logger.debug("Compression not beneficial, using original data");
+				logger.debug('Compression not beneficial, using original data');
 				response.json(bodyData);
 			} else {
 				// Set the content encoding headers
-				response.setHeader("Access-Control-Expose-Headers", "content-encoding");
-				response.setHeader("content-encoding", compressionHeaderValue);
+				response.setHeader('Access-Control-Expose-Headers', 'content-encoding');
+				response.setHeader('content-encoding', compressionHeaderValue);
 
 				response.json(compressedData);
 			}
 		} catch (err) {
-			logger.error("Error compressing response data", { err });
+			logger.error('Error compressing response data', { err });
 			response.json(bodyData);
 		}
 	} else {

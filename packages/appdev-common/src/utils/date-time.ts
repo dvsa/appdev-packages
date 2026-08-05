@@ -1,7 +1,7 @@
-import dayjs from "dayjs";
-import customParseFormat from "dayjs/plugin/customParseFormat";
-import timezone from "dayjs/plugin/timezone";
-import utc from "dayjs/plugin/utc";
+import dayjs from 'dayjs';
+import customParseFormat from 'dayjs/plugin/customParseFormat';
+import timezone from 'dayjs/plugin/timezone';
+import utc from 'dayjs/plugin/utc';
 
 type AcceptableDate = DateTime | string | Date | null;
 
@@ -10,19 +10,16 @@ type AcceptableDate = DateTime | string | Date | null;
  */
 export class DateTime {
 	private instance!: dayjs.Dayjs;
-	private static readonly UKLocalDateTimeFormat = "DD/MM/YYYY HH:mm:ss";
-	private static readonly UKLocalDateFormat = "DD/MM/YYYY";
-	private static readonly UK_TIMEZONE = "Europe/London";
+	private static readonly UKLocalDateTimeFormat = 'DD/MM/YYYY HH:mm:ss';
+	private static readonly UKLocalDateFormat = 'DD/MM/YYYY';
+	private static readonly UK_TIMEZONE = 'Europe/London';
 
 	/**
 	 * Creates a new DateTime instance
 	 * @param sourceDateTime - Initial date/time (string, Date, or another DateTime)
 	 * @param format - Optional format string for parsing string dates
 	 */
-	constructor(
-		sourceDateTime?: AcceptableDate,
-		format: string | undefined = undefined,
-	) {
+	constructor(sourceDateTime?: AcceptableDate, format: string | undefined = undefined) {
 		// Set up dayjs plugins
 		dayjs.extend(customParseFormat);
 		dayjs.extend(timezone);
@@ -31,10 +28,7 @@ export class DateTime {
 		if (sourceDateTime === undefined || sourceDateTime === null) {
 			// For current time, directly get the UK time but preserve the timezone
 			this.instance = dayjs().tz(DateTime.UK_TIMEZONE);
-		} else if (
-			typeof sourceDateTime === "string" ||
-			sourceDateTime instanceof Date
-		) {
+		} else if (typeof sourceDateTime === 'string' || sourceDateTime instanceof Date) {
 			// For string inputs, PRESERVE THE ORIGINAL TIME without timezone conversion
 			// This is essential for test consistency
 			if (format) {
@@ -46,7 +40,7 @@ export class DateTime {
 			// Clone a DateTime instance
 			this.instance = sourceDateTime.instance.clone();
 		} else {
-			throw new Error("Invalid date input");
+			throw new Error('Invalid date input');
 		}
 	}
 
@@ -64,10 +58,7 @@ export class DateTime {
 	 * @param format - Optional format string for parsing
 	 * @returns New DateTime instance or null if source is null
 	 */
-	static at(
-		sourceDateTime: AcceptableDate,
-		format: string | undefined = undefined,
-	): DateTime | null {
+	static at(sourceDateTime: AcceptableDate, format: string | undefined = undefined): DateTime | null {
 		if (!sourceDateTime) {
 			return null;
 		}
@@ -79,13 +70,8 @@ export class DateTime {
 	 * @param sourceDateTime - Source date/time
 	 * @returns Formatted string or null if source is null
 	 */
-	static StandardUkLocalDateTimeAdapter(
-		sourceDateTime: AcceptableDate,
-	): string | null {
-		return (
-			DateTime.at(sourceDateTime)?.format(DateTime.UKLocalDateTimeFormat) ||
-			null
-		);
+	static StandardUkLocalDateTimeAdapter(sourceDateTime: AcceptableDate): string | null {
+		return DateTime.at(sourceDateTime)?.format(DateTime.UKLocalDateTimeFormat) || null;
 	}
 
 	/**
@@ -93,12 +79,8 @@ export class DateTime {
 	 * @param sourceDateTime - Source date/time
 	 * @returns Formatted string or null if source is null
 	 */
-	static StandardUkLocalDateAdapter(
-		sourceDateTime: AcceptableDate,
-	): string | null {
-		return (
-			DateTime.at(sourceDateTime)?.format(DateTime.UKLocalDateFormat) || null
-		);
+	static StandardUkLocalDateAdapter(sourceDateTime: AcceptableDate): string | null {
+		return DateTime.at(sourceDateTime)?.format(DateTime.UKLocalDateFormat) || null;
 	}
 
 	/**
@@ -173,11 +155,7 @@ export class DateTime {
 	 * @param precise - Whether to return decimal result
 	 * @returns Difference in specified units
 	 */
-	diff(
-		targetDate: AcceptableDate,
-		unit: dayjs.QUnitType,
-		precise?: boolean,
-	): number {
+	diff(targetDate: AcceptableDate, unit: dayjs.QUnitType, precise?: boolean): number {
 		const date = new DateTime(targetDate);
 		return this.instance.diff(date.instance, unit, precise);
 	}
@@ -189,9 +167,7 @@ export class DateTime {
 	 */
 	daysDiff(targetDate: AcceptableDate): number {
 		const date = new DateTime(targetDate);
-		return this.instance
-			.startOf("day")
-			.diff(date.instance.startOf("day"), "day");
+		return this.instance.startOf('day').diff(date.instance.startOf('day'), 'day');
 	}
 
 	/**
@@ -242,10 +218,7 @@ export class DateTime {
 	isBetween(startDate: AcceptableDate, endDate: AcceptableDate): boolean {
 		const start = new DateTime(startDate);
 		const end = new DateTime(endDate);
-		return (
-			this.instance.isAfter(start.instance) &&
-			this.instance.isBefore(end.instance)
-		);
+		return this.instance.isAfter(start.instance) && this.instance.isBefore(end.instance);
 	}
 
 	/**
@@ -305,7 +278,7 @@ export class DateTime {
 	 */
 	debug(): object {
 		return {
-			formatted: this.format("DD/MM/YYYY HH:mm:ss"),
+			formatted: this.format('DD/MM/YYYY HH:mm:ss'),
 			isoString: this.toISOString(),
 			hour: this.getHour(),
 			utcOffset: this.instance.utcOffset(),
@@ -313,7 +286,7 @@ export class DateTime {
 	}
 
 	static formatForDB(dateStr: Date | string): string {
-		const date = typeof dateStr === "string" ? new Date(dateStr) : dateStr;
-		return date.toISOString().replace("T", " ").replace("Z", "");
+		const date = typeof dateStr === 'string' ? new Date(dateStr) : dateStr;
+		return date.toISOString().replace('T', ' ').replace('Z', '');
 	}
 }

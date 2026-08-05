@@ -61,7 +61,7 @@ export class DynamoDb {
 
 		const rows: T[] = [];
 
-		let lastEvaluatedKey: Record<string, AttributeValue> | undefined = undefined;
+		let lastEvaluatedKey: Record<string, AttributeValue> | undefined;
 
 		const client = DynamoDb.getClient(clientConfig);
 
@@ -97,7 +97,7 @@ export class DynamoDb {
 	): Promise<T[]> {
 		const rows: T[] = [];
 
-		let lastEvaluatedKey: Record<string, AttributeValue> | undefined = undefined;
+		let lastEvaluatedKey: Record<string, AttributeValue> | undefined;
 
 		const client = DynamoDb.getClient(clientConfig);
 

@@ -1,4 +1,4 @@
-import { HttpStatus } from "../api/http-status-codes";
+import { HttpStatus } from '../api/http-status-codes';
 
 type RoleInfo = { required: string[]; actual: string[] };
 
@@ -9,14 +9,14 @@ export class AuthError extends Error {
 
 	constructor(
 		statusCode = HttpStatus.UNAUTHORIZED,
-		message = "Authorization failed",
-		code = "UNAUTHORIZED",
-		roleInfo: RoleInfo | undefined = undefined,
+		message = 'Authorization failed',
+		code = 'UNAUTHORIZED',
+		roleInfo: RoleInfo | undefined = undefined
 	) {
 		super(message);
 		this.statusCode = statusCode;
 		this.code = code;
-		this.name = "AuthError";
+		this.name = 'AuthError';
 		this.roleInfo = roleInfo ?? undefined;
 
 		if (Error.captureStackTrace) {
