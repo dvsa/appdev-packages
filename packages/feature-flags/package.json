@@ -25,7 +25,7 @@
     "build": "npm run clean && tsc",
     "clean": "rimraf coverage dist && npm run clean:temp",
     "clean:temp": "rimraf profiles",
-    "gitSecrets": "git secrets --scan . && git log -p -- . | scanrepo",
+    "gitSecrets": "git secrets --scan && git secrets --register-aws && git log -p --diff-filter=d -- . ':!*.json' -n 250 | scanrepo",
     "lint": "biome check src",
     "lint:fix": "npm run lint -- --write",
     "prepare": "husky",

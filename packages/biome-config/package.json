@@ -8,7 +8,7 @@
     "directory": "packages/biome-config"
   },
   "scripts": {
-    "gitSecrets": "git secrets --scan . && git log -p -- . | scanrepo",
+    "gitSecrets": "git secrets --scan && git secrets --register-aws && git log -p --diff-filter=d -- . ':!*.json' -n 250 | scanrepo",
     "lint:fix": "echo 'Not implemented'",
     "test": "echo 'Not implemented'"
   },

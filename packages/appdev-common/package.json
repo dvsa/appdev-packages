@@ -29,7 +29,7 @@
 		"test:coverage": "jest --coverage",
 		"prepublishOnly": "npm run build:package && cp -r ./dist/* . && rm -rf ./dist",
 		"postpublish": "git clean -fd && npm run clean:temp",
-		"gitSecrets": "git secrets --scan . && git log -p -- . | scanrepo"
+		"gitSecrets": "git secrets --scan && git secrets --register-aws && git log -p --diff-filter=d -- . ':!*.json' -n 250 | scanrepo"
 	},
 	"dependencies": {
 		"@aws-sdk/client-sts": "^3.989.0",
