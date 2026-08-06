@@ -353,3 +353,15 @@ export const SPECIALIST_TEST_TYPE: ITestTypeList = {
 		'185',
 	],
 };
+
+export const FIRST_TEST: ITestTypeList = {
+	IDS: ['41', '95', '65', '66', '67', '103', '104', '82', '83', '119', '120'],
+};
+
+export const NOTIFIABLE_ALTERATION_TEST: ITestTypeList = {
+	IDS: ['38', '47', '48'],
+};
+
+export const COIF_TEST: ITestTypeList = {
+	IDS: ['142', '143', '175', '176'],
+};

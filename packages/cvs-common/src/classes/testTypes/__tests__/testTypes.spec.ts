@@ -3,11 +3,14 @@ import {
 	ANNUAL_WITH_CERTIFICATE,
 	BASIC_IVA_TEST,
 	CENTRAL_DOCS_TEST,
+	COIF_TEST,
+	FIRST_TEST,
 	HGV_TRL_RWT_TEST,
 	IVA_TEST,
 	LEC_TEST,
 	LOAD_STATUS_TEST,
 	MSVA_TEST,
+	NOTIFIABLE_ALTERATION_TEST,
 	PROHIBITION_CLEARANCE_TEST,
 	SPECIALIST_TEST_TYPE,
 	TIR_TEST,
@@ -32,6 +35,9 @@ describe('validateTestTypeIdInList', () => {
 		const resultVoluntaryIvaTest = TestTypeHelper.validateTestTypeIdInList(VOLUNTARY_IVA_TEST, '191');
 		const resultSpecialistTest = TestTypeHelper.validateTestTypeIdInList(SPECIALIST_TEST_TYPE, '133');
 		const resultLoadStatusTest = TestTypeHelper.validateTestTypeIdInList(LOAD_STATUS_TEST, '94');
+		const resultFirstTest = TestTypeHelper.validateTestTypeIdInList(FIRST_TEST, '41');
+		const resultNotifiableAlteration = TestTypeHelper.validateTestTypeIdInList(NOTIFIABLE_ALTERATION_TEST, '38');
+		const resultCoifTest = TestTypeHelper.validateTestTypeIdInList(COIF_TEST, '142');
 
 		expect(resultLEC).toBe(true);
 		expect(resultADR).toBe(true);
@@ -47,6 +53,9 @@ describe('validateTestTypeIdInList', () => {
 		expect(resultVoluntaryIvaTest).toBe(true);
 		expect(resultSpecialistTest).toBe(true);
 		expect(resultLoadStatusTest).toBe(true);
+		expect(resultFirstTest).toBe(true);
+		expect(resultNotifiableAlteration).toBe(true);
+		expect(resultCoifTest).toBe(true);
 	});
 
 	it('should return false if test type id does not exist in list provided', () => {
@@ -64,6 +73,9 @@ describe('validateTestTypeIdInList', () => {
 		const resultVoluntaryIvaTest = TestTypeHelper.validateTestTypeIdInList(VOLUNTARY_IVA_TEST, '0');
 		const resultSpecialistTest = TestTypeHelper.validateTestTypeIdInList(SPECIALIST_TEST_TYPE, '0');
 		const resultLoadStatusTest = TestTypeHelper.validateTestTypeIdInList(LOAD_STATUS_TEST, '0');
+		const resultFirstTest = TestTypeHelper.validateTestTypeIdInList(FIRST_TEST, '0');
+		const resultNotifiableAlteration = TestTypeHelper.validateTestTypeIdInList(NOTIFIABLE_ALTERATION_TEST, '0');
+		const resultCoifTest = TestTypeHelper.validateTestTypeIdInList(COIF_TEST, '0');
 
 		expect(resultLEC).toBe(false);
 		expect(resultADR).toBe(false);
@@ -79,6 +91,9 @@ describe('validateTestTypeIdInList', () => {
 		expect(resultVoluntaryIvaTest).toBe(false);
 		expect(resultSpecialistTest).toBe(false);
 		expect(resultLoadStatusTest).toBe(false);
+		expect(resultFirstTest).toBe(false);
+		expect(resultNotifiableAlteration).toBe(false);
+		expect(resultCoifTest).toBe(false);
 	});
 });
 
