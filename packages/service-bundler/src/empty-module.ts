@@ -11,7 +11,7 @@
  *
  * When bundled, these methods will have minimal impact on the final bundle size and will not throw errors.
  *
- * @param name
+ * @param _name
  */
 
 // @ts-nocheck

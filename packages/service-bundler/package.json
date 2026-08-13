@@ -18,7 +18,10 @@
         "default": "./index.cjs"
       }
     },
-    "./empty-module.js": "./empty-module.js",
+    "./empty-module.js": {
+      "import": "./empty-module.mjs",
+      "require": "./empty-module.cjs"
+    },
     "./package.json": "./package.json"
   },
   "repository": {
@@ -27,7 +30,7 @@
     "directory": "packages/service-bundler"
   },
   "scripts": {
-    "build": "npm run clean && tsdown && cp ./src/empty-module.ts ./dist/empty-module.js",
+    "build": "npm run clean && tsdown",
     "clean": "rimraf coverage dist && npm run clean:temp",
     "clean:temp": "rimraf api classes response",
     "gitSecrets": "git secrets --scan && git secrets --register-aws && git log -p --diff-filter=d -- . ':!*.json' -n 250 | scanrepo",

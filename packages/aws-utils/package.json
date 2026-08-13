@@ -35,7 +35,7 @@
   },
   "dependencies": {
     "aws-xray-sdk": "^3.10.3",
-    "js-yaml": "^4.1.0"
+    "js-yaml": "^5.2.3"
   },
   "peerDependencies": {
     "@aws-sdk/client-cloudwatch-logs": ">=3.699.0 <4.0.0",
