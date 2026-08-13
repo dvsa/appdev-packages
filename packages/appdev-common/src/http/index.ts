@@ -4,22 +4,21 @@ type HTTPResponse = {
 	statusText: string;
 	headers: Record<string, string>;
 	redirected: boolean;
-	type: "basic" | "cors" | "default" | "error" | "opaque" | "opaqueredirect";
+	type: 'basic' | 'cors' | 'default' | 'error' | 'opaque' | 'opaqueredirect';
 	body?: unknown;
 };
 
 export class HTTPError extends Error {
 	constructor(
 		message: string,
-		public response: HTTPResponse,
+		public response: HTTPResponse
 	) {
 		super(message);
-		this.name = "HTTPError";
+		this.name = 'HTTPError';
 		this.response = response;
 	}
 }
 
-// biome-ignore lint/complexity/noStaticOnlyClass: makes sense for an HTTP utility to encompass all methods
 export class HTTP {
 	/**
 	 * Performs an HTTP GET request.
@@ -27,19 +26,13 @@ export class HTTP {
 	 * @param url
 	 * @param options
 	 */
-	static async get(
-		url: string,
-		options?: Omit<RequestInit, "method" | "body">,
-	): Promise<HTTPResponse> {
-		const response = await fetch(url, { method: "GET", ...options });
+	static async get(url: string, options?: Omit<RequestInit, 'method' | 'body'>): Promise<HTTPResponse> {
+		const response = await fetch(url, { method: 'GET', ...options });
 
 		const serialisedResponse = await HTTP.serialise(response);
 
 		if (!response.ok) {
-			throw new HTTPError(
-				`HTTP GET request failed with status ${response.status}`,
-				serialisedResponse,
-			);
+			throw new HTTPError(`HTTP GET request failed with status ${response.status}`, serialisedResponse);
 		}
 
 		return serialisedResponse;
@@ -52,18 +45,14 @@ export class HTTP {
 	 * @param body
 	 * @param options
 	 */
-	static async post<T>(
-		url: string,
-		body: T,
-		options?: Omit<RequestInit, "method" | "body">,
-	): Promise<HTTPResponse> {
+	static async post<T>(url: string, body: T, options?: Omit<RequestInit, 'method' | 'body'>): Promise<HTTPResponse> {
 		const { contentType, processedBody } = HTTP.prepareBody(body);
 
 		const response = await fetch(url, {
 			...options,
-			method: "POST",
+			method: 'POST',
 			headers: {
-				...(contentType && { "Content-Type": contentType }),
+				...(contentType && { 'Content-Type': contentType }),
 				...options?.headers,
 			},
 			body: processedBody,
@@ -72,10 +61,7 @@ export class HTTP {
 		const serialisedResponse = await HTTP.serialise(response);
 
 		if (!response.ok) {
-			throw new HTTPError(
-				`HTTP POST request failed with status ${response.status}`,
-				serialisedResponse,
-			);
+			throw new HTTPError(`HTTP POST request failed with status ${response.status}`, serialisedResponse);
 		}
 
 		return serialisedResponse;
@@ -88,18 +74,14 @@ export class HTTP {
 	 * @param body
 	 * @param options
 	 */
-	static async put<T>(
-		url: string,
-		body: T,
-		options?: Omit<RequestInit, "method" | "body">,
-	): Promise<HTTPResponse> {
+	static async put<T>(url: string, body: T, options?: Omit<RequestInit, 'method' | 'body'>): Promise<HTTPResponse> {
 		const { contentType, processedBody } = HTTP.prepareBody(body);
 
 		const response = await fetch(url, {
 			...options,
-			method: "PUT",
+			method: 'PUT',
 			headers: {
-				...(contentType && { "Content-Type": contentType }),
+				...(contentType && { 'Content-Type': contentType }),
 				...options?.headers,
 			},
 			body: processedBody,
@@ -108,10 +90,7 @@ export class HTTP {
 		const serialisedResponse = await HTTP.serialise(response);
 
 		if (!response.ok) {
-			throw new HTTPError(
-				`HTTP PUT request failed with status ${response.status}`,
-				serialisedResponse,
-			);
+			throw new HTTPError(`HTTP PUT request failed with status ${response.status}`, serialisedResponse);
 		}
 
 		return serialisedResponse;
@@ -123,19 +102,13 @@ export class HTTP {
 	 * @param url
 	 * @param options
 	 */
-	static async delete(
-		url: string,
-		options?: Omit<RequestInit, "method" | "body">,
-	): Promise<HTTPResponse> {
-		const response = await fetch(url, { method: "DELETE", ...options });
+	static async delete(url: string, options?: Omit<RequestInit, 'method' | 'body'>): Promise<HTTPResponse> {
+		const response = await fetch(url, { method: 'DELETE', ...options });
 
 		const serialisedResponse = await HTTP.serialise(response);
 
 		if (!response.ok) {
-			throw new HTTPError(
-				`HTTP DELETE request failed with status ${response.status}`,
-				serialisedResponse,
-			);
+			throw new HTTPError(`HTTP DELETE request failed with status ${response.status}`, serialisedResponse);
 		}
 
 		return serialisedResponse;
@@ -149,10 +122,10 @@ export class HTTP {
 			const clonedResponse = response.clone();
 
 			// Extract the content-type header so we know how to serialise it
-			const contentType = response.headers.get("content-type") || "";
+			const contentType = response.headers.get('content-type') || '';
 
 			// Check if the JSON header is present
-			if (contentType.includes("application/json")) {
+			if (contentType.includes('application/json')) {
 				// parse to text first
 				const text = await clonedResponse.text();
 
@@ -161,19 +134,20 @@ export class HTTP {
 			}
 			// Check if the body is a buffer
 			else if (
-				contentType.includes("application/pdf") ||
-				contentType.includes("image/") ||
-				contentType.includes("application/octet-stream")
+				contentType.includes('application/pdf') ||
+				contentType.includes('image/') ||
+				contentType.includes('application/octet-stream')
 			) {
 				const buffer = await clonedResponse.arrayBuffer();
-				body = Buffer.from(buffer).toString("base64");
+				body = Buffer.from(buffer).toString('base64');
 			}
 			// Otherwise attempt to serialise as text
 			else {
 				body = await clonedResponse.text();
 			}
 		} catch (error) {
-			console.error("Serialisation error:", error);
+			// biome-ignore lint/suspicious/noConsole: intentional error logging
+			console.error('Serialisation error:', error);
 			body = null;
 		}
 
@@ -198,20 +172,20 @@ export class HTTP {
 
 		if (body instanceof URLSearchParams) {
 			return {
-				contentType: "application/x-www-form-urlencoded",
+				contentType: 'application/x-www-form-urlencoded',
 				processedBody: body,
 			};
 		}
 
-		if (typeof body === "string") {
+		if (typeof body === 'string') {
 			return {
-				contentType: "text/plain",
+				contentType: 'text/plain',
 				processedBody: body,
 			};
 		}
 
 		return {
-			contentType: "application/json",
+			contentType: 'application/json',
 			processedBody: JSON.stringify(body),
 		};
 	}

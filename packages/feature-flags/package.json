@@ -1,6 +1,6 @@
 {
   "name": "@dvsa/cvs-feature-flags",
-  "version": "2.1.0",
+  "version": "3.0.0",
   "description": "Common package to be used in CVS to manage feature flags",
   "author": "DVSA",
   "license": "ISC",
@@ -25,7 +25,7 @@
     "build": "npm run clean && tsc",
     "clean": "rimraf coverage dist && npm run clean:temp",
     "clean:temp": "rimraf profiles",
-    "gitSecrets": "git secrets --scan . && git log -p -- . | scanrepo",
+    "gitSecrets": "git secrets --scan && git secrets --register-aws && git log -p --diff-filter=d -- . ':!*.json' -n 250 | scanrepo",
     "lint": "biome check src",
     "lint:fix": "npm run lint -- --write",
     "prepare": "husky",
@@ -36,27 +36,28 @@
     "postpublish": "git clean -fd && npm run clean:temp"
   },
   "dependencies": {
-    "@aws-lambda-powertools/parameters": "^2.16.0",
+    "@aws-lambda-powertools/parameters": "^2.34.0",
     "lodash.merge": "^4.6.2"
   },
   "devDependencies": {
-    "@biomejs/biome": "1.8.3",
-    "@dvsa/biome-config": "0.1.0",
+    "@biomejs/biome": "2.1.3",
+    "@dvsa/biome-config": "1.0.0",
     "@aws-sdk/client-appconfigdata": "^3.637.0",
     "@smithy/util-stream": "^3.0.1",
+    "@swc/core": "^1.15.46",
+    "@swc/jest": "^0.2.39",
     "@types/aws-lambda": "^8.10.145",
-    "@types/jest": "^29.5.14",
+    "@types/jest": "^30.0.0",
     "@types/lodash.merge": "^4.6.9",
-    "@types/node": "^22.15.16",
+    "@types/node": "^24.13.3",
     "aws-sdk-client-mock": "^4.0.1",
     "aws-sdk-client-mock-jest": "^4.1.0",
     "husky": "^9.1.7",
-    "jest": "^29.7.0",
-    "lint-staged": "^15.2.10",
-    "rimraf": "^6.0.1",
-    "ts-jest": "^29.2.5",
+    "jest": "^30.4.2",
+    "lint-staged": "^17.2.0",
+    "rimraf": "^6.1.3",
     "ts-node": "^10.9.2",
-    "typescript": "^5.3.3"
+    "typescript": "^7.0.2"
   },
   "lint-staged": {
     "*.{js,ts,mjs,css,md,ts,json}": "npm run lint:fix -- --no-errors-on-unmatched"

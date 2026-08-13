@@ -45,8 +45,10 @@ export class BusinessEventPublisher {
 			return BusinessEventPublisher.getClient(config).send(payload.command);
 		} catch (error) {
 			if (error instanceof BusinessEventValidationError) {
+				// biome-ignore lint/suspicious/noConsole: intentional error logging
 				console.error(`${BusinessEventValidator.name}`, error);
 			} else {
+				// biome-ignore lint/suspicious/noConsole: intentional error logging
 				console.error('Failed to publish business event', error);
 			}
 		}

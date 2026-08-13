@@ -1,5 +1,5 @@
-import { performance } from "node:perf_hooks";
-import type { Logger } from "@aws-lambda-powertools/logger";
+import { performance } from 'node:perf_hooks';
+import type { Logger } from '@aws-lambda-powertools/logger';
 
 /**
  * Decorator to log the duration of a method execution by passing in an accessor function to retrieve the logger.
@@ -16,15 +16,8 @@ import type { Logger } from "@aws-lambda-powertools/logger";
  * 	async findAll() {} // The log name here will be [findAll]
  * }
  */
-export function TimedWithAccessor<T extends { logger: Logger }>(
-	getLogger: (self: T) => Logger,
-	label?: string,
-) {
-	return (
-		_target: unknown,
-		propertyKey: string,
-		descriptor: PropertyDescriptor,
-	) => {
+export function TimedWithAccessor<T extends { logger: Logger }>(getLogger: (self: T) => Logger, label?: string) {
+	return (_target: unknown, propertyKey: string, descriptor: PropertyDescriptor) => {
 		const originalMethod = descriptor.value;
 
 		// biome-ignore lint/suspicious/noExplicitAny: "any" is correct for this context

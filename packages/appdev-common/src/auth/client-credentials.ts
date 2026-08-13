@@ -1,5 +1,5 @@
-import { stringify } from "node:querystring";
-import { type JWTPayload, decodeJwt } from "jose";
+import { stringify } from 'node:querystring';
+import { decodeJwt, type JWTPayload } from 'jose';
 
 export interface ClientCredentialsResponse {
 	token_type: string;
@@ -31,7 +31,7 @@ interface Options {
 
 export class ClientCredentials {
 	private static accessToken: string;
-	private static readonly grantType = "client_credentials";
+	private static readonly grantType = 'client_credentials';
 
 	/**
 	 * Create a new instance of the ClientCredentials class
@@ -52,7 +52,7 @@ export class ClientCredentials {
 			debugMode: false,
 			forceFreshAuth: false,
 			expirySkewSeconds: 30,
-		},
+		}
 	) {}
 
 	/**
@@ -64,21 +64,19 @@ export class ClientCredentials {
 		if (
 			this.options?.forceFreshAuth ||
 			!ClientCredentials.accessToken ||
-			ClientCredentials.isAccessTokenExpired(
-				this.options.expirySkewSeconds ?? 30,
-			)
+			ClientCredentials.isAccessTokenExpired(this.options.expirySkewSeconds ?? 30)
 		) {
 			const { access_token } = await this.fetchClientCredentials();
 
-			if (this.options?.debugMode)
-				console.log("[DEBUG] New access token fetched:", access_token);
+			if (this.options?.debugMode) {
+				// biome-ignore lint/suspicious/noConsole: intentional debug logging
+				console.log('[DEBUG] New access token fetched:', access_token);
+			}
 
 			ClientCredentials.accessToken = access_token;
 		} else if (this.options?.debugMode) {
-			console.log(
-				"[DEBUG] Using existing access token:",
-				ClientCredentials.accessToken,
-			);
+			// biome-ignore lint/suspicious/noConsole: intentional error logging
+			console.log('[DEBUG] Using existing access token:', ClientCredentials.accessToken);
 		}
 		return ClientCredentials.accessToken;
 	}
@@ -90,8 +88,8 @@ export class ClientCredentials {
 	 */
 	private async fetchClientCredentials(): Promise<ClientCredentialsResponse> {
 		const response = await fetch(this.tokenUrl, {
-			method: "POST",
-			headers: { "Content-Type": "application/x-www-form-urlencoded" },
+			method: 'POST',
+			headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 			body: this.resource
 				? stringify({
 						grant_type: ClientCredentials.grantType,
@@ -110,12 +108,9 @@ export class ClientCredentials {
 
 		if (!response.ok) {
 			const errorBody = await response.text();
-			console.error(
-				"Error fetching client credentials",
-				response.status,
-				errorBody,
-			);
-			throw new Error("Failed to fetch client credentials");
+			// biome-ignore lint/suspicious/noConsole: intentional error logging
+			console.error('Error fetching client credentials', response.status, errorBody);
+			throw new Error('Failed to fetch client credentials');
 		}
 
 		return (await response.json()) as Promise<ClientCredentialsResponse>;
@@ -132,7 +127,8 @@ export class ClientCredentials {
 		try {
 			decodedAccessToken = decodeJwt(ClientCredentials.accessToken);
 		} catch (err) {
-			console.error("Error decoding access token:", err);
+			// biome-ignore lint/suspicious/noConsole: intentional error logging
+			console.error('Error decoding access token:', err);
 			return true;
 		}
 

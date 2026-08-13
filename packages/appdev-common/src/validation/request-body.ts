@@ -1,7 +1,7 @@
-import Ajv from "ajv";
-import addFormats from "ajv-formats";
-import { HttpStatus } from "../api/http-status-codes";
-import { ValidationError } from "./validation-error";
+import Ajv from 'ajv';
+import addFormats from 'ajv-formats';
+import { HttpStatus } from '../api/http-status-codes';
+import { ValidationError } from './validation-error';
 
 interface ValidateRequestBodyOptions {
 	isArray?: boolean;
@@ -10,7 +10,7 @@ interface ValidateRequestBodyOptions {
 
 const ajv = new Ajv({ removeAdditional: true, allErrors: true });
 addFormats(ajv);
-ajv.addKeyword("tsEnumNames");
+ajv.addKeyword('tsEnumNames');
 
 /**
  * Decorator tp validate an express request body against a specified schema
@@ -21,7 +21,7 @@ ajv.addKeyword("tsEnumNames");
  */
 export function ValidateRequestBody<T>(
 	schema: object,
-	opts: ValidateRequestBodyOptions = { isArray: false, errorDetails: true },
+	opts: ValidateRequestBodyOptions = { isArray: false, errorDetails: true }
 ) {
 	return (_target: T, _propertyKey: string, descriptor: PropertyDescriptor) => {
 		const originalMethod = descriptor.value;
@@ -32,20 +32,13 @@ export function ValidateRequestBody<T>(
 
 			// just to be safe, check the bodies existence before attempting to validate it
 			if (!body) {
-				throw new ValidationError(
-					HttpStatus.BAD_REQUEST,
-					"No request body detected",
-				);
+				throw new ValidationError(HttpStatus.BAD_REQUEST, 'No request body detected');
 			}
 
-			const payload = Buffer.isBuffer(body)
-				? JSON.parse(body.toString("utf-8"))
-				: body;
+			const payload = Buffer.isBuffer(body) ? JSON.parse(body.toString('utf-8')) : body;
 
 			// Create the appropriate schema based on whether we're validating an array or a single object
-			const schemaToValidate = opts?.isArray
-				? { type: "array", items: schema }
-				: schema;
+			const schemaToValidate = opts?.isArray ? { type: 'array', items: schema } : schema;
 
 			const validateFunction = ajv.compile(schemaToValidate);
 
@@ -56,8 +49,8 @@ export function ValidateRequestBody<T>(
 			if (!isValid) {
 				throw new ValidationError(
 					HttpStatus.BAD_REQUEST,
-					"Validation failed",
-					opts?.errorDetails ? validateFunction.errors : null,
+					'Validation failed',
+					opts?.errorDetails ? validateFunction.errors : null
 				);
 			}
 

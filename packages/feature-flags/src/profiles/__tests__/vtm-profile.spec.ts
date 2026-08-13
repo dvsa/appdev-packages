@@ -1,7 +1,5 @@
-const getAppConfig = jest.fn();
-
 jest.mock('@aws-lambda-powertools/parameters/appconfig', () => ({
-	getAppConfig,
+	getAppConfig: jest.fn(),
 }));
 
 // import { getProfile } from '../vtm';

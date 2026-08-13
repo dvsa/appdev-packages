@@ -1,6 +1,5 @@
-import { gunzipSync, gzipSync } from "node:zlib";
+import { gunzipSync, gzipSync } from 'node:zlib';
 
-// biome-ignore lint/complexity/noStaticOnlyClass: Valid use case for a static class
 export class DataCompression {
 	/**
 	 * Extracts a compressed (in base64) string using gunzip into a JSON object
@@ -9,7 +8,7 @@ export class DataCompression {
 	 * @returns {T}
 	 */
 	static decompress<T>(compressedData: string): T {
-		const gzippedBytes = Buffer.from(compressedData, "base64");
+		const gzippedBytes = Buffer.from(compressedData, 'base64');
 		const unzippedJson = gunzipSync(gzippedBytes).toString();
 		return JSON.parse(unzippedJson);
 	}
@@ -23,6 +22,6 @@ export class DataCompression {
 	static compress<T>(data: T): string {
 		const jsonString = JSON.stringify(data);
 		const gzippedData = gzipSync(Buffer.from(jsonString));
-		return gzippedData.toString("base64");
+		return gzippedData.toString('base64');
 	}
 }

@@ -1,5 +1,5 @@
-import type { ErrorObject } from "ajv";
-import { HttpStatus } from "../api/http-status-codes";
+import type { ErrorObject } from 'ajv';
+import { HttpStatus } from '../api/http-status-codes';
 
 type ValidationErrorDetails = Partial<ErrorObject[]> | string | null;
 
@@ -9,13 +9,13 @@ export class ValidationError extends Error {
 
 	constructor(
 		statusCode = HttpStatus.BAD_REQUEST,
-		message = "Validation failed",
-		details: ValidationErrorDetails = null,
+		message = 'Validation failed',
+		details: ValidationErrorDetails = null
 	) {
 		super(message);
 		this.statusCode = statusCode;
 		this.details = details;
-		this.name = "ValidationError";
+		this.name = 'ValidationError';
 
 		if (Error.captureStackTrace) {
 			Error.captureStackTrace(this, ValidationError);
@@ -33,18 +33,11 @@ export class ValidationError extends Error {
 		};
 	}
 
-	private unwrapErrorDetails = (
-		details: ValidationErrorDetails,
-	): ValidationErrorDetails => {
+	private unwrapErrorDetails = (details: ValidationErrorDetails): ValidationErrorDetails => {
 		if (Array.isArray(details)) {
 			return details.map((error) => {
-				if (
-					error &&
-					typeof error === "object" &&
-					"keyword" in error &&
-					error.keyword === "enum"
-				) {
-					return `${error.instancePath.replace("/", "")} ${error.message}: ${error.params?.allowedValues.join(", ")}`;
+				if (error && typeof error === 'object' && 'keyword' in error && error.keyword === 'enum') {
+					return `${error.instancePath.replace('/', '')} ${error.message}: ${error.params?.allowedValues.join(', ')}`;
 				}
 				return error?.message || error;
 			}) as ValidationErrorDetails;

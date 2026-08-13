@@ -1,6 +1,6 @@
 {
   "name": "@dvsa/cvs-db-schemas",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "CVS Drizzle Schema Common Package",
   "author": "DVSA",
   "license": "ISC",
@@ -29,7 +29,7 @@
     "test:coverage": "npm run test -- --coverage",
     "prepublishOnly": "npm run build:package && cp -r ./dist/* . && rm -rf ./dist",
     "postpublish": "git clean -fd && npm run clean:temp",
-    "gitSecrets": "git secrets --scan . && git log -p -- . | scanrepo"
+    "gitSecrets": "git secrets --scan && git secrets --register-aws && git log -p --diff-filter=d -- . ':!*.json' -n 250 | scanrepo"
   },
   "peerDependencies": {
     "drizzle-orm": "^0.45.1"

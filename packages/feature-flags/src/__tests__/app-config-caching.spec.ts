@@ -1,12 +1,11 @@
 import { clearCaches } from '@aws-lambda-powertools/parameters';
-import { Uint8ArrayBlobAdapter } from '@smithy/util-stream';
-
 import {
 	AppConfigDataClient,
 	GetLatestConfigurationCommand,
 	GetLatestConfigurationCommandOutput,
 	StartConfigurationSessionCommand,
 } from '@aws-sdk/client-appconfigdata';
+import { Uint8ArrayBlobAdapter } from '@smithy/util-stream';
 
 import { mockClient } from 'aws-sdk-client-mock';
 import { FeatureFlagsClientName } from '..';

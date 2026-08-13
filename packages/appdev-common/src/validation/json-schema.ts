@@ -1,11 +1,11 @@
-import Ajv, { type ValidateFunction } from "ajv";
-import addFormats from "ajv-formats";
-import { HttpStatus } from "../api/http-status-codes";
-import { ValidationError } from "./validation-error";
+import Ajv, { type ValidateFunction } from 'ajv';
+import addFormats from 'ajv-formats';
+import { HttpStatus } from '../api/http-status-codes';
+import { ValidationError } from './validation-error';
 
 const ajv = new Ajv({ removeAdditional: true, allErrors: true });
 addFormats(ajv);
-ajv.addKeyword("tsEnumNames");
+ajv.addKeyword('tsEnumNames');
 
 const validatorCache = new WeakMap<object, ValidateFunction>();
 
@@ -26,8 +26,8 @@ export function validateJsonSchema(schema: object, data: unknown): void {
 	if (!validateFunction(data)) {
 		throw new ValidationError(
 			HttpStatus.BAD_REQUEST,
-			"Validation failed",
-			[...(validateFunction.errors ?? [])], // copy before next call overwrites
+			'Validation failed',
+			[...(validateFunction.errors ?? [])] // copy before next call overwrites
 		);
 	}
 }
