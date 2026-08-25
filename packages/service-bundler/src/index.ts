@@ -97,6 +97,11 @@ export class ServicePackager {
 		mode: 'production',
 		optimization: {
 			minimize: true,
+			// Lambda handlers are deployed and loaded as self-contained artifacts.
+			// Keep the JavaScript graph in the entry chunk so the zip does not need
+			// Rspack's runtime chunk loader to resolve additional JS files.
+			splitChunks: false,
+			runtimeChunk: false,
 		},
 		ignoreWarnings: [
 			{
@@ -108,6 +113,7 @@ export class ServicePackager {
 		externals: ['@babel/core', /^@babel\//],
 		output: {
 			module: true,
+			asyncChunks: false,
 		},
 		module: {
 			rules: [
