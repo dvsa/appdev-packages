@@ -7,7 +7,7 @@ import type { validationMetadatasToSchemas } from 'class-validator-jsonschema';
 import type { OpenAPIObject, OperationObject, PathItemObject } from 'openapi3-ts/oas30';
 import type { MetadataArgsStorage, RoutingControllersOptions } from 'routing-controllers';
 import type { routingControllersToSpec } from 'routing-controllers-openapi';
-import type { Config } from 'ts-json-schema-generator';
+import { type Config, createProgram, DEFAULT_CONFIG } from 'ts-json-schema-generator';
 import { createIndexedGenerator } from './indexed-generator';
 
 type LambdaAPIOptions = OperationObject & {
@@ -264,8 +264,28 @@ export class TypescriptToOpenApiSpec {
 
 	private static async generateDefinitions(paths: SchemaPath[]) {
 		const definitions = {};
+		let previousPath: string | undefined;
+		let previousProgram: Config['tsProgram'];
 
 		for (const batch of TypescriptToOpenApiSpec.createSchemaBatches(paths)) {
+			if (batch.length === 1) {
+				const path = batch[0].path;
+				if (path !== previousPath || !previousProgram) {
+					previousProgram = createProgram({
+						...DEFAULT_CONFIG,
+						path,
+						tsconfig: `${process.cwd()}/tsconfig.json`,
+					});
+					previousPath = path;
+				}
+				// Share compiler work, but retain a fresh parser/formatter and an ordered
+				// schema merge per entry. Even a barrel can contain conflicting child names.
+				Object.assign(definitions, TypescriptToOpenApiSpec.generateDefinitionBatch(batch, path, previousProgram));
+				continue;
+			}
+
+			previousPath = undefined;
+			previousProgram = undefined;
 			const combinedPath = TypescriptToOpenApiSpec.combinePaths(batch.map(({ path }) => path));
 
 			if (combinedPath === undefined) {
@@ -293,11 +313,16 @@ export class TypescriptToOpenApiSpec {
 		return { definitions };
 	}
 
-	private static generateDefinitionBatch(paths: SchemaPath[], combinedPath = paths[0].path) {
+	private static generateDefinitionBatch(
+		paths: SchemaPath[],
+		combinedPath = paths[0].path,
+		tsProgram?: Config['tsProgram']
+	) {
 		const types = paths.map(({ interfaceName }) => interfaceName ?? '*');
 		const type = types[0] === '*' ? '*' : types.length === 1 ? types[0] : types;
 		const config: Config = {
 			path: combinedPath,
+			tsProgram,
 			tsconfig: `${process.cwd()}/tsconfig.json`,
 			type,
 		};

@@ -171,3 +171,37 @@ These are combined construction and schema creation times on synthetic inputs,
 not full consuming-service OpenAPI generation times. The adapter extends the
 dependency's protected named lookup method, so dependency upgrades should run
 the compatibility tests and benchmark.
+
+### Fragmented batch performance
+
+Duplicate names retain individual schema generation and input-order merging.
+Consecutive single-entry batches with exactly the same input path share a
+TypeScript program, while each entry gets a fresh parser and formatter. This
+preserves declaration and child-schema collision behaviour, including when a
+barrel imports different declarations with the same name. The program is released
+from the reuse cache when the path changes, a multi-entry batch starts, or the
+generation call finishes.
+
+```sh
+npm run benchmark:batch-fragmentation --workspace=@dvsa/openapi-schema-generator
+```
+
+This compares the previous generation loop against compiler reuse, with the same
+indexed generator in both variants. It uses 500 interfaces across 5 files, requested
+through one barrel, and five fresh processes per scenario/variant with alternating
+execution order. Type checking stays enabled; timings cover `generate()` and exclude
+process startup and harness loading. All OpenAPI output hashes must match.
+
+Example local medians (Node 24.11.1, ts-json-schema-generator 2.9.0, TypeScript 5.9.3):
+
+| Inputs | Programs before → after | Time before → after |
+| --- | ---: | ---: |
+| 25 distinct names | 1 → 1 | 260ms → 221ms |
+| 25 distinct names, first name repeated at end | 26 → 1 | 2,793ms → 271ms |
+| 25 distinct names, two interspersed repeats | 27 → 1 | 2,814ms → 257ms |
+| Same name repeated 6 times | 6 → 1 | 753ms → 222ms |
+
+The distinct-name case takes the unchanged batching path; its timing difference is
+measurement variation. Gains apply to consecutive fragmented entries sharing a path;
+alternating different files still requires separate programs. These synthetic inputs
+do not load a consuming service's Lambda handlers.
