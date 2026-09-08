@@ -7,7 +7,8 @@ import type { validationMetadatasToSchemas } from 'class-validator-jsonschema';
 import type { OpenAPIObject, OperationObject, PathItemObject } from 'openapi3-ts/oas30';
 import type { MetadataArgsStorage, RoutingControllersOptions } from 'routing-controllers';
 import type { routingControllersToSpec } from 'routing-controllers-openapi';
-import { type Config, createGenerator } from 'ts-json-schema-generator';
+import type { Config } from 'ts-json-schema-generator';
+import { createIndexedGenerator } from './indexed-generator';
 
 type LambdaAPIOptions = OperationObject & {
 	path: string;
@@ -300,7 +301,7 @@ export class TypescriptToOpenApiSpec {
 			tsconfig: `${process.cwd()}/tsconfig.json`,
 			type,
 		};
-		const generator = createGenerator(config);
+		const generator = createIndexedGenerator(config);
 
 		return generator.createSchema(type).definitions;
 	}

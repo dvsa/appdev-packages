@@ -1,6 +1,6 @@
 import { join } from 'node:path';
 import type { OpenAPIObject } from 'openapi3-ts/oas30';
-import { createGenerator } from 'ts-json-schema-generator';
+import { createProgram } from 'ts-json-schema-generator';
 import { TypescriptToOpenApiSpec } from './index';
 
 jest.mock('ts-json-schema-generator', () => {
@@ -8,7 +8,7 @@ jest.mock('ts-json-schema-generator', () => {
 
 	return {
 		...actual,
-		createGenerator: jest.fn(actual.createGenerator),
+		createProgram: jest.fn(actual.createProgram),
 	};
 });
 
@@ -33,7 +33,7 @@ describe('TypescriptToOpenApiSpec', () => {
 			{ path: moreModelsPath, interfaceName: 'Model20' },
 		]);
 
-		expect(createGenerator).toHaveBeenCalledTimes(1);
+		expect(createProgram).toHaveBeenCalledTimes(1);
 		expect(result.components?.schemas).toEqual(
 			expect.objectContaining({
 				Model1: expect.any(Object),
@@ -57,7 +57,7 @@ describe('TypescriptToOpenApiSpec', () => {
 			{ path: join(process.cwd(), '__mocks__/more-models.ts') },
 		]);
 
-		expect(createGenerator).toHaveBeenCalledTimes(1);
+		expect(createProgram).toHaveBeenCalledTimes(1);
 		expect(result.components?.schemas).toEqual(
 			expect.objectContaining({
 				Model1: expect.any(Object),

@@ -137,3 +137,37 @@ console.log("Generated OpenAPI schema:", JSON.stringify(schemas, null, 2));
 - If a referenced model is not found, an error is thrown.
 - If an invalid TypeScript file is provided, an error is logged.
 - If an interface is not found in the specified file, an error is thrown.
+
+### Type lookup performance
+
+Named schema batches use an index of project declarations built once per generator.
+Dependency declarations are indexed only if a requested name is absent from the project.
+Project declarations retain precedence over dependency declarations, and wildcard
+selection is unchanged. Indexes are discarded with the generator so subsequent runs
+read source changes.
+
+Run the repeatable comparison against the dependency's standard generator:
+
+```sh
+npm run benchmark:type-lookup --workspace=@dvsa/openapi-schema-generator
+```
+
+The benchmark generates 2,000 interfaces across 20 files, requests 1, 100 and 500
+names, and compares five fresh processes per variant with alternating execution
+order. Type checking remains enabled. It verifies identical schema hashes and
+reports median generator construction, schema creation and combined times;
+process startup and harness loading are excluded.
+
+Example local results (Node 24.11.1, ts-json-schema-generator 2.9.0, its TypeScript
+5.9.3 compiler):
+
+| Requested names | Standard generator | Indexed generator |
+| --- | ---: | ---: |
+| 1 | 257ms | 255ms |
+| 100 | 793ms | 267ms |
+| 500 | 2,950ms | 303ms |
+
+These are combined construction and schema creation times on synthetic inputs,
+not full consuming-service OpenAPI generation times. The adapter extends the
+dependency's protected named lookup method, so dependency upgrades should run
+the compatibility tests and benchmark.
