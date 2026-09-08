@@ -101,7 +101,7 @@
     "@dvsa/biome-config": "1.0.0",
     "@swc/core": "^1.15.46",
     "@swc/jest": "^0.2.39",
-    "@types/aws-lambda": "^8.10.145",
+    "@types/aws-lambda": "^8.10.162",
     "@types/jest": "^30.0.0",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^24.13.3",
