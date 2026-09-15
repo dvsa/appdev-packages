@@ -80,4 +80,4 @@ npm test --workspace=@dvsa/api-test-kit -- --runInBand
 npm run lint --workspace=@dvsa/api-test-kit
 ```
 
-The build emits CommonJS JavaScript and declarations into `dist`. The existing publish lifecycle copies these files to the package root. Public APIs are exported from `src/index.ts`. Playwright is a peer dependency so consumers supply the runner; it is also a development dependency for this package's checks.
+The build emits CommonJS (`index.cjs`) and ES module (`index.mjs`) bundles with matching declarations into `dist`. The existing publish lifecycle copies these files to the package root, where `package.json` entry points select the appropriate bundle and types. The package regression tests build and load this published layout using both `require` and `import`. Public APIs are exported from `src/index.ts`. Playwright is a peer dependency so consumers supply the runner; it is also a development dependency for this package's checks.

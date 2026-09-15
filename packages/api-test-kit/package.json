@@ -1,6 +1,22 @@
 {
   "name": "@dvsa/api-test-kit",
-  "version": "0.0.1",
+  "version": "0.1.0",
+  "main": "index.cjs",
+  "module": "index.mjs",
+  "types": "index.d.cts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./index.d.mts",
+        "default": "./index.mjs"
+      },
+      "require": {
+        "types": "./index.d.cts",
+        "default": "./index.cjs"
+      }
+    },
+    "./package.json": "./package.json"
+  },
   "keywords": [
     "dvsa",
     "nodejs",
@@ -9,7 +25,7 @@
   "author": "DVSA",
   "repository": {
     "type": "git",
-    "url": "https://github.com/dvsa/appdev-packages.git",
+    "url": "git+https://github.com/dvsa/appdev-packages.git",
     "directory": "packages/api-test-kit"
   },
   "description": "Playwright API test kit for testing endpoints",
@@ -56,7 +72,5 @@
   },
   "peerDependencies": {
     "@playwright/test": "^1.62.1"
-  },
-  "main": "index.js",
-  "types": "index.d.ts"
+  }
 }
