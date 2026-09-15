@@ -45,7 +45,7 @@
   },
   "dependencies": {
     "@rspack/core": "2.1.8",
-    "fs-extra": "^11.3.0",
+    "fs-extra": "^11.4.0",
     "val-loader": "^6.0.0",
     "zip-lib": "^1.1.2"
   },
