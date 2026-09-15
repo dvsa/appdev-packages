@@ -12,12 +12,12 @@ on:
         required: true
         type: choice
         options:
+          - 'api-test-kit'
           - 'appdev-common'
           - 'aws-utils'
           - 'biome-config'
           - 'business-events'
           - 'cvs-common'
-          - 'cvs-db-schemas'
           - 'database'
           - 'feature-flags'
           - 'openapi-schema-gen'
@@ -45,8 +45,8 @@ jobs:
         include:
           - package: cvs-common
             path: packages/cvs-common
-          - package: cvs-db-schemas
-            path: packages/cvs-db-schemas
+          - package: api-test-kit
+            path: packages/api-test-kit
           - package: appdev-common
             path: packages/appdev-common
           - package: feature-flags

@@ -1,0 +1,6 @@
+{
+	"extends": ["@dvsa/biome-config/biome"],
+	"vcs": {
+		"useIgnoreFile": false
+	}
+}
