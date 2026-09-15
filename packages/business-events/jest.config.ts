@@ -2,6 +2,7 @@ import type { Config } from 'jest';
 
 const config: Config = {
   testEnvironment: 'node',
+  modulePathIgnorePatterns: ['<rootDir>/dist/'],
   testMatch: ['**/?(*.)+(spec|test).[jt]s?(x)'],
   transform: {
     '^.+\\.(t|j)sx?$': [
