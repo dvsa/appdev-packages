@@ -1,7 +1,6 @@
 import type { Logger } from '@aws-lambda-powertools/logger';
 import type { APIGatewayProxyResult } from 'aws-lambda';
 import type { Request, Response } from 'express';
-import { HttpStatus } from '../api/http-status-codes';
 import { DataCompression } from './compression';
 
 /**
@@ -33,7 +32,8 @@ export const EncodePayloadInterceptor = (
 
 	const didRequestCompressed = request?.headers?.['x-accept-encoding'] === compressionHeaderValue;
 
-	const shouldCompress = didRequestCompressed && content.statusCode === HttpStatus.OK;
+	// if has header and is in 2xx range
+	const shouldCompress = didRequestCompressed && content.statusCode?.toString().startsWith('2');
 
 	// Parse the body if it's a string
 	const bodyData = typeof content.body === 'string' ? JSON.parse(content.body) : content.body;
