@@ -55,6 +55,14 @@ const defaultFeatureFlags = {
 		readAurora: false,
 	},
 	/**
+	 * Feature flags for the CVS defects domain
+	 */
+	defectsDB: {
+		enabled: true,
+		readAurora: false,
+		writeAurora: false,
+	},
+	/**
 	 * Feature flags for actioning entries in the outbox
 	 */
 	outbox: {
