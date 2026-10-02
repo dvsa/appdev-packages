@@ -60,7 +60,7 @@ export const VOLUNTARY_IVA_TEST: ITestTypeList = {
 };
 
 export const LOAD_STATUS_TEST: ITestTypeList = {
-	IDS: ['94', '40', '53', '98', '70', '107'],
+	IDS: ['94', '40', '70', '107'],
 };
 
 export const PROHIBITION_CLEARANCE_TEST: ITestTypeList = {
