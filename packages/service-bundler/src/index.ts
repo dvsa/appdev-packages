@@ -6,6 +6,7 @@ import { join, resolve } from 'node:path';
 import { DefinePlugin, type RspackOptions, rspack, Stats } from '@rspack/core';
 import { copy } from 'fs-extra';
 import { archiveFolder } from 'zip-lib';
+import { IZipOptions } from 'zip-lib/lib/zip';
 
 enum LogColour {
 	Cyan = '36',
@@ -93,10 +94,31 @@ export class ServicePackager {
 	private static handlerFileName: string;
 	private static proxyDetails: ProxyDetails;
 	private static config: Config;
+	private static readonly compressionSettings = { compressionLevel: 9 } as IZipOptions;
 	private static readonly coreBuildOptions: RspackOptions = {
 		mode: 'production',
 		optimization: {
 			minimize: true,
+			// Lambda handlers are deployed and loaded as self-contained artifacts.
+			// Keep the JavaScript graph in the entry chunk so the zip does not need
+			// Rspack's runtime chunk loader to resolve additional JS files.
+			splitChunks: false,
+			runtimeChunk: false,
+
+			// minimizer: [
+			// 	new SwcJsMinimizerRspackPlugin({
+			// 		// Avoid emitting a separate `*.LICENSE.txt` file into every artefact
+			// 		extractComments: false,
+			// 		minimizerOptions: {
+			// 			module: true,
+			// 			ecma: 2024,
+			// 			compress: { passes: 2 },
+			// 			// Preserve class names as decorators / DI / ORM metadata may rely on `constructor.name`
+			// 			mangle: { keep_classnames: true },
+			// 			format: { comments: false },
+			// 		},
+			// 	}),
+			// ],
 		},
 		ignoreWarnings: [
 			{
@@ -108,6 +130,7 @@ export class ServicePackager {
 		externals: ['@babel/core', /^@babel\//],
 		output: {
 			module: true,
+			asyncChunks: false,
 		},
 		module: {
 			rules: [
@@ -437,7 +460,7 @@ export class ServicePackager {
 
 				const zipFile = `${ServicePackager.config.artifactOutputDir}/${fnArtifactName}.zip`;
 
-				await archiveFolder(`${functionBundlesDir}/${fn.name}`, zipFile);
+				await archiveFolder(`${functionBundlesDir}/${fn.name}`, zipFile, ServicePackager.compressionSettings);
 
 				const { size } = await stat(zipFile);
 
@@ -458,7 +481,7 @@ export class ServicePackager {
 
 			const zipFile = `${ServicePackager.config.artifactOutputDir}/${proxyArtifactName}.zip`;
 
-			await archiveFolder(proxyBundleDir, zipFile);
+			await archiveFolder(proxyBundleDir, zipFile, ServicePackager.compressionSettings);
 
 			const { size } = await stat(zipFile);
 
