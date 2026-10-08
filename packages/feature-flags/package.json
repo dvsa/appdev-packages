@@ -1,6 +1,6 @@
 {
   "name": "@dvsa/cvs-feature-flags",
-  "version": "3.0.1",
+  "version": "3.1.0-canary.0",
   "description": "Common package to be used in CVS to manage feature flags",
   "author": "DVSA",
   "license": "ISC",
