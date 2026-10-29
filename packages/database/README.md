@@ -80,6 +80,14 @@ async function fetchUsers() {
 fetchUsers();
 ```
 
+### Parameters
+`#{name}` values (including `<foreach>` items and nested properties such as `#{item.id}`) are sent to the database as bound parameters (`?` for MySQL, `:1`, `:2`… for Oracle), never written into the SQL text. `<if>` and `<when>` tests still see the real values.
+
+- `${name}` is still substituted into the SQL as-is, so only use it for trusted values you have validated yourself, such as an integer `LIMIT`.
+- A statement that uses `#{}` must not also contain a literal `?` (for example inside a string literal), because the driver would treat it as a placeholder. The session throws if it finds one.
+- Values are bound as the same text mybatis-mapper used to write between the quotes: numbers and booleans as strings, objects as JSON, `null` as `NULL`.
+- The session renders from its own copy of the namespace, so calling `MyBatis.getStatement` directly still behaves as before.
+
 ### Selecting a Single Record and Mapping to a Model
 ```ts
 class User {

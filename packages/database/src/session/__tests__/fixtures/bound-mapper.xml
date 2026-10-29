@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="bound">
+    <sql id="activeOnly">AND r.deleted_date IS NULL</sql>
+
+    <select id="search">
+        SELECT r.reg_no FROM bus_reg r
+        WHERE r.reg_no = #{regNo}
+        <if test="operatorName != null">
+            AND r.operator LIKE CONCAT('%', #{operatorName}, '%')
+        </if>
+        <if test="type == 'current'">
+            AND r.removed_date IS NULL
+        </if>
+        <if test="areas != null and areas.length > 0">
+            AND r.area IN <foreach item="area" collection="areas" open="(" separator="," close=")">#{area}</foreach>
+        </if>
+        <include refid="activeOnly"/>
+        LIMIT ${limit}
+    </select>
+
+    <select id="entities">
+        SELECT l.lic_no FROM licence l WHERE l.lic_no IN
+        <foreach item="item" collection="list" open="(" separator="," close=")">#{item.operatorIdentifier}</foreach>
+    </select>
+
+    <select id="repeated">
+        SELECT 1 FROM t WHERE a = #{value} OR b = #{value} OR c = #{other}
+    </select>
+
+    <select id="literalQuestionMark">
+        SELECT 1 FROM t WHERE note = 'why?' AND a = #{value}
+    </select>
+
+    <update id="rename">
+        UPDATE organisation SET name = #{name} WHERE id = #{id}
+    </update>
+</mapper>

@@ -13,6 +13,7 @@ jest.mock('mysql2/promise', () => ({
 
 jest.mock('mybatis-mapper', () => ({
 	createMapper: jest.fn(),
+	getMapper: jest.fn().mockReturnValue({}),
 	getStatement: jest.fn().mockReturnValue('Mock SQL Statement'),
 }));
 
@@ -35,7 +36,12 @@ describe('MyBatisSession', () => {
 
 	test('select executes a query and returns results', async () => {
 		const results = await mockSession.query('testMapper', {});
-		expect(MyBatis.getStatement).toHaveBeenCalledWith('testNamespace', 'testMapper', {}, expect.anything());
+		expect(MyBatis.getStatement).toHaveBeenCalledWith(
+			'testNamespace::bound',
+			'testMapper',
+			expect.objectContaining({ __mybatisBind: expect.anything() }),
+			expect.anything()
+		);
 		expect(mockConnection.query).toHaveBeenCalledWith('Mock SQL Statement');
 		expect(results).toEqual([]);
 	});
@@ -62,11 +68,18 @@ describe('MyBatisSession', () => {
 		const consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
 
 		const results = await mockSession.query('testMapper', {});
-		expect(MyBatis.getStatement).toHaveBeenCalledWith('testNamespace', 'testMapper', {}, expect.anything());
+		expect(MyBatis.getStatement).toHaveBeenCalledWith(
+			'testNamespace::bound',
+			'testMapper',
+			expect.objectContaining({ __mybatisBind: expect.anything() }),
+			expect.anything()
+		);
 		// biome-ignore lint/suspicious/noConsole: testing log
 		expect(console.log).toHaveBeenCalledWith('*** Query for namespace: testNamespace & mapperID: testMapper ***');
 		// biome-ignore lint/suspicious/noConsole: testing log
 		expect(console.log).toHaveBeenCalledWith('Mock SQL Statement');
+		// biome-ignore lint/suspicious/noConsole: testing log
+		expect(console.log).toHaveBeenCalledWith('(0 bound values)');
 		// biome-ignore lint/suspicious/noConsole: testing log
 		expect(console.log).toHaveBeenCalledWith('\n***');
 		expect(mockConnection.query).toHaveBeenCalledWith('Mock SQL Statement');
