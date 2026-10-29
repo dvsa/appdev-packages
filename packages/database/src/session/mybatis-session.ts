@@ -1,7 +1,10 @@
 import { type ClassConstructor, plainToInstance } from 'class-transformer';
-import MyBatis, { type Params } from 'mybatis-mapper';
+import MyBatis, { type Format, type Params } from 'mybatis-mapper';
 import type { Connection as MySQLConnection, ResultSetHeader } from 'mysql2/promise';
 import type { Connection as OracleConnection } from 'oracledb';
+import { type BindValue, renderBoundStatement } from './bound-statement';
+
+export { escapeLikePattern } from './bound-statement';
 
 type DatabaseConnection = MySQLConnection | OracleConnection;
 
@@ -9,6 +12,8 @@ export enum DatabaseType {
 	MYSQL = 'mysql',
 	ORACLE = 'oracle',
 }
+
+const FORMAT: Format = { language: 'sql', indent: '  ' };
 
 export class MyBatisSession {
 	/**
@@ -34,39 +39,22 @@ export class MyBatisSession {
 	 * @return {Promise<unknown[]>}
 	 */
 	async query(mapperId: string, params: Params = {}): Promise<unknown> {
-		let query = '';
-
-		try {
-			query = MyBatis.getStatement(this.namespace, mapperId, params, {
-				language: 'sql',
-				indent: '  ',
-			});
-		} catch (err) {
-			throw {
-				error: err,
-				message: `[ERROR]: MyBatis.getStatement for namespace: ${this.namespace} & mapperID: ${mapperId}.`,
-			};
-		}
-
-		if (this.debugMode) {
-			// biome-ignore lint/suspicious/noConsole: intentional info logging
-			console.log(`*** Query for namespace: ${this.namespace} & mapperID: ${mapperId} ***`);
-			// biome-ignore lint/suspicious/noConsole: intentional info logging
-			console.log(query);
-			// biome-ignore lint/suspicious/noConsole: intentional info logging
-			console.log('\n***');
-		}
-
 		if (this.dbType === DatabaseType.MYSQL) {
-			const [rows] = await (this.connection as MySQLConnection).query(query);
+			// Reads stay on the text protocol, with each value escaped by mysql2 itself (what its client-side '?'
+			// placeholders do), rather than server-side prepared statements, which mysql2 caches per connection
+			const mysql = this.connection as MySQLConnection;
+			const { sql, values } = this.statement(mapperId, params, (value) => mysql.escape(value));
+			this.logStatement('Query', mapperId, sql, values.length);
+			const [rows] = await mysql.query(sql);
 			return rows;
 		}
 
-		const result = await (this.connection as OracleConnection).execute(
-			query,
-			{},
-			{ outFormat: (await import('oracledb')).OUT_FORMAT_OBJECT }
-		);
+		const { sql, values } = this.statement(mapperId, params, (_value, position) => `:${position}`);
+		this.logStatement('Query', mapperId, sql, values.length);
+
+		const result = await (this.connection as OracleConnection).execute(sql, values, {
+			outFormat: (await import('oracledb')).OUT_FORMAT_OBJECT,
+		});
 
 		return result.rows ?? result;
 	}
@@ -126,41 +114,20 @@ export class MyBatisSession {
 	 * @return {Promise<number>} - Number of affected rows
 	 */
 	async execute(mapperId: string, params: Params = {}): Promise<number> {
-		let query = '';
+		const isMySQL = this.dbType === DatabaseType.MYSQL;
+		const { sql, values } = this.statement(mapperId, params, (_value, position) => (isMySQL ? '?' : `:${position}`));
+		this.logStatement('Execute', mapperId, sql, values.length);
 
-		try {
-			query = MyBatis.getStatement(this.namespace, mapperId, params, {
-				language: 'sql',
-				indent: '  ',
-			});
-		} catch (err) {
-			throw {
-				error: err,
-				message: `[ERROR]: MyBatis.getStatement for namespace: ${this.namespace} & mapperID: ${mapperId}.`,
-			};
-		}
-
-		if (this.debugMode) {
-			// biome-ignore lint/suspicious/noConsole: intentional info logging
-			console.log(`*** Execute for namespace: ${this.namespace} & mapperID: ${mapperId} ***`);
-			// biome-ignore lint/suspicious/noConsole: intentional info logging
-			console.log(query);
-			// biome-ignore lint/suspicious/noConsole: intentional info logging
-			console.log('\n***');
-		}
-
-		if (this.dbType === DatabaseType.MYSQL) {
+		if (isMySQL) {
 			// MySQL execution
-			const [result] = await (this.connection as MySQLConnection).execute(query);
+			const [result] = await (this.connection as MySQLConnection).execute(sql, values);
 			return (result as ResultSetHeader).affectedRows || 0;
 		}
 
 		// Oracle execution
-		const result = await (this.connection as OracleConnection).execute(
-			query,
-			{},
-			{ outFormat: (await import('oracledb')).OUT_FORMAT_OBJECT }
-		);
+		const result = await (this.connection as OracleConnection).execute(sql, values, {
+			outFormat: (await import('oracledb')).OUT_FORMAT_OBJECT,
+		});
 		return result.rowsAffected || 0;
 	}
 
@@ -217,6 +184,49 @@ export class MyBatisSession {
 		} else {
 			await (this.connection as OracleConnection).rollback();
 		}
+	}
+
+	/**
+	 * Render a statement, handing each `#{}` value to `replace` instead of letting mybatis-mapper inline it
+	 * @param {string} mapperId - Mapper ID
+	 * @param {Params} params - Query parameters
+	 * @param {(value: BindValue, position: number) => string} replace - SQL for each value: a placeholder or an escaped literal
+	 * @return {{ sql: string; values: BindValue[] }} - The SQL, and the values in order (to bind when using placeholders)
+	 */
+	private statement(
+		mapperId: string,
+		params: Params,
+		replace: (value: BindValue, position: number) => string
+	): { sql: string; values: BindValue[] } {
+		const values: BindValue[] = [];
+
+		try {
+			const sql = renderBoundStatement(this.namespace, mapperId, params, FORMAT, (value, position) => {
+				values.push(value);
+				return replace(value, position);
+			});
+			return { sql, values };
+		} catch (err) {
+			throw {
+				error: err,
+				message: `[ERROR]: MyBatis.getStatement for namespace: ${this.namespace} & mapperID: ${mapperId}.`,
+			};
+		}
+	}
+
+	private logStatement(kind: string, mapperId: string, sql: string, valueCount: number) {
+		if (!this.debugMode) {
+			return;
+		}
+		// Only the number of values is logged, as they may be personal data
+		// biome-ignore lint/suspicious/noConsole: intentional info logging
+		console.log(`*** ${kind} for namespace: ${this.namespace} & mapperID: ${mapperId} ***`);
+		// biome-ignore lint/suspicious/noConsole: intentional info logging
+		console.log(sql);
+		// biome-ignore lint/suspicious/noConsole: intentional info logging
+		console.log(`(${valueCount} parameter value${valueCount === 1 ? '' : 's'})`);
+		// biome-ignore lint/suspicious/noConsole: intentional info logging
+		console.log('\n***');
 	}
 
 	/**

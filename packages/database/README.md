@@ -80,6 +80,27 @@ async function fetchUsers() {
 fetchUsers();
 ```
 
+### Parameters
+`#{name}` values, including `<foreach>` items and paths such as `#{item.id}` or `#{list.length}`, are no longer escaped into the SQL by mybatis-mapper, whose escaping could be broken out of. `<if>` and `<when>` tests still see the real values, and the parameters object is used as before (getters, class instances and `<foreach>`/`<bind>` writes all behave the same).
+
+- **How values reach the database**
+  - MySQL `query`/`selectOne`/`selectList`: each value is escaped by mysql2 itself (`connection.escape`, the same escaping its client-side `?` placeholders use) and the statement is sent as text. This relies on the default `sql_mode`, without `NO_BACKSLASH_ESCAPES`. Reads are kept off server-side prepared statements because mysql2 caches those per connection.
+  - MySQL `execute`: server-side prepared statement with `?` placeholders.
+  - Oracle: positional `:1`, `:2`… binds.
+- **`${name}`** is still substituted into the SQL as-is. Only use it for trusted values you have validated yourself, such as an integer `LIMIT`.
+- **Value types:**
+  - strings are passed as they are;
+  - numbers and booleans are passed as the same text as before (`'25'`, `'true'`), so a number compared with a `VARCHAR` column still uses its index;
+  - `Date` and `Buffer` values are passed to the driver as they are;
+  - objects and arrays are passed as JSON;
+  - `null` becomes `NULL`.
+- **Escaping changes:**
+  - a `%` or `_` in a value is no longer escaped, so it is a wildcard if the value is used in a `LIKE` pattern. Use `escapeLikePattern(value)` (exported alongside `MyBatisSession`) to match it literally, e.g. `LIKE CONCAT('%', #{name}, '%')` with `name: escapeLikePattern(input)`;
+  - double quotes are no longer altered.
+- **Placeholder limits:** where placeholders are used (MySQL `execute`, Oracle), a `#{}` must sit where the database accepts a bind value. Forms like `IS #{v}` or `DATE #{d}` only work on MySQL reads.
+- **Namespace copy:** the session renders from a copy of its namespace, registered as `<namespace>::bound` and kept in step with the original, so calling `MyBatis.getStatement` directly behaves as before.
+- **Dependency:** mybatis-mapper is pinned to an exact version because this relies on its internals.
+
 ### Selecting a Single Record and Mapping to a Model
 ```ts
 class User {
