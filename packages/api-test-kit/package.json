@@ -54,7 +54,7 @@
     "@swc/core": "^1.16.2",
     "@swc/jest": "^0.2.39",
     "@types/aws-lambda": "^8.10.162",
-    "@types/express": "^5.0.0",
+    "@types/express": "^5.0.6",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.13.3",
     "husky": "^9.1.7",
