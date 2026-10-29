@@ -2,7 +2,9 @@ import { type ClassConstructor, plainToInstance } from 'class-transformer';
 import MyBatis, { type Format, type Params } from 'mybatis-mapper';
 import type { Connection as MySQLConnection, ResultSetHeader } from 'mysql2/promise';
 import type { Connection as OracleConnection } from 'oracledb';
-import { type BoundStatement, registerBoundNamespace, renderBoundStatement } from './bound-statement';
+import { type BindValue, renderBoundStatement } from './bound-statement';
+
+export { escapeLikePattern } from './bound-statement';
 
 type DatabaseConnection = MySQLConnection | OracleConnection;
 
@@ -14,8 +16,6 @@ export enum DatabaseType {
 const FORMAT: Format = { language: 'sql', indent: '  ' };
 
 export class MyBatisSession {
-	private readonly boundNamespace: string;
-
 	/**
 	 * This class will instantiate a list of mappers via a MyBatis plugin
 	 * @param {DatabaseConnection} connection - Database connection object (MySQL or Oracle)
@@ -30,7 +30,6 @@ export class MyBatisSession {
 		private debugMode = false
 	) {
 		MyBatis.createMapper(this.mappers);
-		this.boundNamespace = registerBoundNamespace(this.namespace);
 	}
 
 	/**
@@ -40,15 +39,18 @@ export class MyBatisSession {
 	 * @return {Promise<unknown[]>}
 	 */
 	async query(mapperId: string, params: Params = {}): Promise<unknown> {
-		const { sql, values } = this.statement(mapperId, params);
-		this.logStatement('Query', mapperId, sql, values);
-
 		if (this.dbType === DatabaseType.MYSQL) {
-			const [rows] = await (values.length > 0
-				? (this.connection as MySQLConnection).query(sql, values)
-				: (this.connection as MySQLConnection).query(sql));
+			// Reads stay on the text protocol, with each value escaped by mysql2 itself (what its client-side '?'
+			// placeholders do), rather than server-side prepared statements, which mysql2 caches per connection
+			const mysql = this.connection as MySQLConnection;
+			const { sql, values } = this.statement(mapperId, params, (value) => mysql.escape(value));
+			this.logStatement('Query', mapperId, sql, values.length);
+			const [rows] = await mysql.query(sql);
 			return rows;
 		}
+
+		const { sql, values } = this.statement(mapperId, params, (_value, position) => `:${position}`);
+		this.logStatement('Query', mapperId, sql, values.length);
 
 		const result = await (this.connection as OracleConnection).execute(sql, values, {
 			outFormat: (await import('oracledb')).OUT_FORMAT_OBJECT,
@@ -112,10 +114,11 @@ export class MyBatisSession {
 	 * @return {Promise<number>} - Number of affected rows
 	 */
 	async execute(mapperId: string, params: Params = {}): Promise<number> {
-		const { sql, values } = this.statement(mapperId, params);
-		this.logStatement('Execute', mapperId, sql, values);
+		const isMySQL = this.dbType === DatabaseType.MYSQL;
+		const { sql, values } = this.statement(mapperId, params, (_value, position) => (isMySQL ? '?' : `:${position}`));
+		this.logStatement('Execute', mapperId, sql, values.length);
 
-		if (this.dbType === DatabaseType.MYSQL) {
+		if (isMySQL) {
 			// MySQL execution
 			const [result] = await (this.connection as MySQLConnection).execute(sql, values);
 			return (result as ResultSetHeader).affectedRows || 0;
@@ -184,16 +187,25 @@ export class MyBatisSession {
 	}
 
 	/**
-	 * Render a statement with its `#{}` values as bound parameters
+	 * Render a statement, handing each `#{}` value to `replace` instead of letting mybatis-mapper inline it
 	 * @param {string} mapperId - Mapper ID
 	 * @param {Params} params - Query parameters
-	 * @return {BoundStatement} - SQL with placeholders (`?` for MySQL, `:n` for Oracle) and the values to bind
+	 * @param {(value: BindValue, position: number) => string} replace - SQL for each value: a placeholder or an escaped literal
+	 * @return {{ sql: string; values: BindValue[] }} - The SQL, and the values in order (to bind when using placeholders)
 	 */
-	private statement(mapperId: string, params: Params): BoundStatement {
-		const placeholder = this.dbType === DatabaseType.MYSQL ? () => '?' : (position: number) => `:${position}`;
+	private statement(
+		mapperId: string,
+		params: Params,
+		replace: (value: BindValue, position: number) => string
+	): { sql: string; values: BindValue[] } {
+		const values: BindValue[] = [];
 
 		try {
-			return renderBoundStatement(this.boundNamespace, mapperId, params, placeholder, FORMAT);
+			const sql = renderBoundStatement(this.namespace, mapperId, params, FORMAT, (value, position) => {
+				values.push(value);
+				return replace(value, position);
+			});
+			return { sql, values };
 		} catch (err) {
 			throw {
 				error: err,
@@ -202,7 +214,7 @@ export class MyBatisSession {
 		}
 	}
 
-	private logStatement(kind: string, mapperId: string, sql: string, values: BoundStatement['values']) {
+	private logStatement(kind: string, mapperId: string, sql: string, valueCount: number) {
 		if (!this.debugMode) {
 			return;
 		}
@@ -212,7 +224,7 @@ export class MyBatisSession {
 		// biome-ignore lint/suspicious/noConsole: intentional info logging
 		console.log(sql);
 		// biome-ignore lint/suspicious/noConsole: intentional info logging
-		console.log(`(${values.length} bound value${values.length === 1 ? '' : 's'})`);
+		console.log(`(${valueCount} parameter value${valueCount === 1 ? '' : 's'})`);
 		// biome-ignore lint/suspicious/noConsole: intentional info logging
 		console.log('\n***');
 	}

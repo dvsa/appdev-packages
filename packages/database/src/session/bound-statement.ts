@@ -1,41 +1,103 @@
+import { randomBytes } from 'node:crypto';
 import MyBatis, { type Format, type Params } from 'mybatis-mapper';
 
 /**
  * mybatis-mapper renders `#{}` values into the SQL text as quoted, escaped literals. Its escaping (backslash-escape,
- * then double every quote) can be broken out of, so values must be bound instead.
+ * then double every quote) can be broken out of, so the session must handle the values itself.
  *
- * mybatis-mapper has no placeholder mode, so each `#{path}` in a copy of the mapper is rewritten to
- * `${__mybatisBind.path}`. `__mybatisBind` is a proxy that, when read, records the live value at that path (including
- * the current `<foreach>` item) and returns a unique token. `<if>`/`<when>` tests still see the real parameters. After
- * rendering, each token is swapped for a placeholder and its value is passed to the driver.
+ * mybatis-mapper has no placeholder mode, so each `#{a.b}` in a copy of the namespace is rewritten to
+ * `${__mybatisBind.a__dot__b}`. Reading that property from the `__mybatisBind` proxy resolves the whole path against the
+ * live parameters (including the current `<foreach>` item), records the value and returns a unique token. `<if>`/`<when>`
+ * tests still see the real parameters. After rendering, the caller replaces each token: with a driver placeholder (and
+ * binds the value), or with the driver's own escaping of the value.
+ *
+ * This relies on mybatis-mapper internals (`getMapper()` being its live store, `${}` values inserted verbatim), which
+ * is why the dependency is pinned to an exact version.
  */
 
 const BIND_KEY = '__mybatisBind';
 const BOUND_NAMESPACE_SUFFIX = '::bound';
+// mybatis-mapper builds a RegExp from the reference, so the separator must be plain word characters
+const PATH_SEPARATOR = '__dot__';
+// Same pattern mybatis-mapper uses, so no #{} is left for it to inline (a name with '$' then fails as not converted)
 const PARAMETER_REFERENCE = /#\{([a-zA-Z0-9._$]+)\}/g;
-const TOKEN = /__MYBATIS_BIND_(\d+)__/g;
+const REWRITTEN_REFERENCE = /\$\{__mybatisBind\.([a-zA-Z0-9_$]+)\}/g;
 
 type MapperNode = { type?: string; content?: string; children?: MapperNode[] };
 
-export type BindValue = string | null;
+export type BindValue = string | Date | Buffer | null;
 
-export type BoundStatement = { sql: string; values: BindValue[] };
+// Rewritten copies keyed by the original statement, so createMapper reloading a file is picked up
+const rewrittenStatements = new WeakMap<MapperNode[], MapperNode[]>();
 
 /**
- * Registers (once) a copy of the namespace whose `#{}` references are rewritten for binding.
- * The original namespace is left untouched for anything calling mybatis-mapper directly.
+ * Renders a statement, replacing each `#{}` value with the text returned by `replace`.
  *
  * @param {string} namespace - Namespace of the mapper
- * @return {string} - The namespace to render bound statements from
+ * @param {string} mapperId - Mapper ID
+ * @param {Params} params - Query parameters
+ * @param {Format} format - mybatis-mapper format options
+ * @param {(value: BindValue, position: number) => string} replace - SQL for the nth value (1-based), e.g. a placeholder
+ * @return {string} - The rendered SQL
  */
-export function registerBoundNamespace(namespace: string): string {
+export function renderBoundStatement(
+	namespace: string,
+	mapperId: string,
+	params: Params,
+	format: Format,
+	replace: (value: BindValue, position: number) => string
+): string {
+	const recorded: BindValue[] = [];
+	// A per-render nonce stops text from ${} values or the SQL itself being mistaken for a token
+	const tokenPrefix = `__MYBATIS_BIND_${randomBytes(6).toString('hex')}_`;
+
+	let rendered: string;
+	try {
+		rendered = withBindingProxy(
+			params,
+			(root) => bindingProxy(root, recorded, tokenPrefix),
+			(renderParams) => MyBatis.getStatement(syncBoundNamespace(namespace), mapperId, renderParams, format)
+		);
+	} catch (err) {
+		throw new Error(toUserFacing((err as Error).message), { cause: err });
+	}
+
+	let position = 0;
+	return rendered.replace(new RegExp(`${tokenPrefix}(\\d+)__`, 'g'), (_token, index: string) =>
+		replace(recorded[Number(index)], ++position)
+	);
+}
+
+/**
+ * Escapes `%`, `_` and `\` so a value matches literally inside a MySQL `LIKE` pattern (default escape character),
+ * e.g. `LIKE CONCAT('%', #{name}, '%')` with `name: escapeLikePattern(input)`.
+ *
+ * @param {string} value - Text to match literally
+ * @return {string} - The escaped text
+ */
+export function escapeLikePattern(value: string): string {
+	return value.replace(/[\\%_]/g, (character) => `\\${character}`);
+}
+
+/**
+ * Brings the bound copy of a namespace up to date with the original, rewriting only statements not seen before.
+ * The original namespace is left untouched for anything calling mybatis-mapper directly.
+ */
+function syncBoundNamespace(namespace: string): string {
 	const mappers = MyBatis.getMapper() as unknown as Record<string, Record<string, MapperNode[]>>;
 	const boundNamespace = `${namespace}${BOUND_NAMESPACE_SUFFIX}`;
+	const original = mappers[namespace];
 
-	if (mappers[namespace]) {
-		const copy = structuredClone(mappers[namespace]);
-		for (const statement of Object.values(copy)) {
-			statement.forEach(rewriteReferences);
+	if (original) {
+		const copy: Record<string, MapperNode[]> = {};
+		for (const [id, statement] of Object.entries(original)) {
+			let rewritten = rewrittenStatements.get(statement);
+			if (!rewritten) {
+				rewritten = structuredClone(statement);
+				rewritten.forEach(rewriteReferences);
+				rewrittenStatements.set(statement, rewritten);
+			}
+			copy[id] = rewritten;
 		}
 		mappers[boundNamespace] = copy;
 	}
@@ -44,99 +106,89 @@ export function registerBoundNamespace(namespace: string): string {
 }
 
 /**
- * Renders a statement with every `#{}` value replaced by a placeholder.
- *
- * @param {string} boundNamespace - Namespace returned by {@link registerBoundNamespace}
- * @param {string} mapperId - Mapper ID
- * @param {Params} params - Query parameters
- * @param {(position: number) => string} placeholder - Placeholder for the nth bound value (1-based)
- * @param {Format} format - mybatis-mapper format options
- * @return {BoundStatement} - SQL with placeholders, and the values in placeholder order
+ * Renders with the caller's own parameters object, as mybatis-mapper always has (so getters, inherited properties and
+ * `<foreach>`/`<bind>` writes behave as before), with the proxy attached for the duration as a hidden property.
  */
-export function renderBoundStatement(
-	boundNamespace: string,
-	mapperId: string,
+function withBindingProxy<T>(
 	params: Params,
-	placeholder: (position: number) => string,
-	format: Format
-): BoundStatement {
-	const recorded: BindValue[] = [];
-	// Shallow copy: mybatis-mapper writes <foreach> items and <bind> results onto the parameters it is given
-	const renderParams: Record<string, unknown> = { ...params };
-	renderParams[BIND_KEY] = bindingProxy(renderParams, [], recorded);
+	makeProxy: (root: Params) => object,
+	render: (renderParams: Params) => T
+): T {
+	// A frozen or sealed object can't take the property, so render from a copy (the proxy reads from that copy too)
+	const renderParams = Object.isExtensible(params) ? params : { ...params };
 
-	const rendered = MyBatis.getStatement(boundNamespace, mapperId, renderParams as Params, format);
-
-	if (recorded.length > 0 && rendered.includes('?')) {
-		throw new Error(`Statement ${mapperId} contains a literal '?', which cannot be used alongside bound parameters`);
-	}
-
-	const values: BindValue[] = [];
-	const sql = rendered.replace(TOKEN, (_token, index: string) => {
-		values.push(recorded[Number(index)]);
-		return placeholder(values.length);
+	Object.defineProperty(renderParams, BIND_KEY, {
+		value: makeProxy(renderParams),
+		configurable: true,
+		enumerable: false,
 	});
-
-	return { sql, values };
+	try {
+		return render(renderParams);
+	} finally {
+		delete (renderParams as Record<string, unknown>)[BIND_KEY];
+	}
 }
 
 function rewriteReferences(node: MapperNode) {
 	if (node.type === 'text' && node.content) {
-		node.content = node.content.replace(PARAMETER_REFERENCE, `\${${BIND_KEY}.$1}`);
+		node.content = node.content.replace(
+			PARAMETER_REFERENCE,
+			(_reference, path: string) => `\${${BIND_KEY}.${path.split('.').join(PATH_SEPARATOR)}}`
+		);
 	}
 	node.children?.forEach(rewriteReferences);
 }
 
-function bindingProxy(root: Record<string, unknown>, path: string[], recorded: BindValue[]): object {
-	const record = (value: BindValue) => {
-		recorded.push(value);
-		return `__MYBATIS_BIND_${recorded.length - 1}__`;
-	};
+// Put the caller's own names back into mybatis-mapper errors
+function toUserFacing(message: string): string {
+	return message
+		.replace(REWRITTEN_REFERENCE, (_reference, path: string) => `#{${path.split(PATH_SEPARATOR).join('.')}}`)
+		.replaceAll(BOUND_NAMESPACE_SUFFIX, '');
+}
 
+function bindingProxy(root: Params, recorded: BindValue[], tokenPrefix: string): object {
 	return new Proxy(
 		{},
 		{
 			get(_target, property) {
-				// A whole object referenced as #{obj} is stringified in the SQL, as mybatis-mapper does for JSON fields
-				if (property === Symbol.toPrimitive) {
-					return () => record(JSON.stringify(resolve(root, path)));
-				}
 				if (typeof property !== 'string') {
 					return undefined;
 				}
 
-				const childPath = [...path, property];
-				const value = resolve(root, childPath);
+				const value = resolve(root, property.split(PATH_SEPARATOR));
 
-				// Leave undefined alone so mybatis-mapper still reports the parameter as not converted
-				if (value === undefined) {
+				// Leave undefined (and functions) alone so mybatis-mapper still reports the parameter as not converted
+				if (value === undefined || typeof value === 'function') {
 					return undefined;
 				}
-				if (isPlainObject(value)) {
-					return bindingProxy(root, childPath, recorded);
-				}
 
-				return record(toBindValue(value));
+				recorded.push(toBindValue(value));
+				return `${tokenPrefix}${recorded.length - 1}__`;
 			},
 		}
 	);
 }
 
-// Same value mybatis-mapper would have put between the quotes, without the escaping
-function toBindValue(value: unknown): BindValue {
-	if (value === null) {
-		return null;
-	}
-	return typeof value === 'object' ? JSON.stringify(value) : String(value);
-}
-
-function resolve(root: Record<string, unknown>, path: string[]): unknown {
+function resolve(root: unknown, path: string[]): unknown {
 	return path.reduce<unknown>(
-		(value, key) => (value !== null && typeof value === 'object' ? (value as Record<string, unknown>)[key] : undefined),
+		(value, key) => (value === null || value === undefined ? undefined : (value as Record<string, unknown>)[key]),
 		root
 	);
 }
 
-function isPlainObject(value: unknown): boolean {
-	return typeof value === 'object' && value !== null && !Array.isArray(value) && !(value instanceof Date);
+function toBindValue(value: unknown): BindValue {
+	if (value === null || typeof value === 'string') {
+		return value;
+	}
+	// Dates and binary are passed as they are; mybatis-mapper's JSON-quoted form for them never matched anything
+	if (value instanceof Date || Buffer.isBuffer(value)) {
+		return value;
+	}
+	// Objects and arrays are stringified, as mybatis-mapper does for JSON fields
+	if (typeof value === 'object') {
+		return JSON.stringify(value);
+	}
+	// Numbers and booleans stay the text mybatis-mapper sent: a number compared to a VARCHAR column stops it using its
+	// index, and a native boolean behaves differently from 'true'/'false' on both MySQL and Oracle
+	return String(value);
 }

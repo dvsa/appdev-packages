@@ -32,6 +32,18 @@
         SELECT 1 FROM t WHERE note = 'why?' AND a = #{value}
     </select>
 
+    <select id="lengths">
+        SELECT 1 FROM t WHERE n = #{name.length} AND c = #{list.length} AND first = #{list.0}
+    </select>
+
+    <select id="types">
+        SELECT 1 FROM t WHERE d = #{date} AND f = #{flag} AND b = #{bytes} AND j = #{json}
+    </select>
+
+    <select id="rawAndBound">
+        SELECT '${raw}' AS r FROM t WHERE a = #{value}
+    </select>
+
     <update id="rename">
         UPDATE organisation SET name = #{name} WHERE id = #{id}
     </update>
