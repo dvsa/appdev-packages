@@ -2,6 +2,11 @@
 
 Centralised script for bundling and zipping service artifacts for deployment.
 
+JavaScript is emitted as a single entry bundle per function and API proxy. This
+keeps Lambda artifacts self-contained and avoids runtime JavaScript chunk loading.
+Native `.node` assets, source maps, and files supplied through `copyFiles` are
+still emitted separately when required.
+
 ### Pre-requisites
 
 - Node.js (Please see `.nvmrc` for specific version)
