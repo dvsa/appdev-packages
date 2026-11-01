@@ -63,6 +63,14 @@ const defaultFeatureFlags = {
 		writeAurora: false,
 	},
 	/**
+	 * Feature flags for the CVS test results domain
+	 */
+	testResultsDB: {
+		enabled: true,
+		readAurora: false,
+		writeAurora: false,
+	},
+	/**
 	 * Feature flags for actioning entries in the outbox
 	 */
 	outbox: {
