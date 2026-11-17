@@ -10,6 +10,19 @@ import type { routingControllersToSpec } from 'routing-controllers-openapi';
 import { type Config, createProgram, DEFAULT_CONFIG } from 'ts-json-schema-generator';
 import { createIndexedGenerator } from './indexed-generator';
 
+const warnedLegacyApis = new Set<string>();
+
+function warnLegacyApi(api: string): void {
+	if (warnedLegacyApis.has(api)) return;
+	warnedLegacyApis.add(api);
+	console.warn(
+		`[@dvsa/openapi-schema-generator] Legacy API ${api} is in use. ` +
+			'For Inversify HTTP services, migrate to InversifyToOpenApiSpec from ' +
+			'@dvsa/openapi-schema-generator/inversify, Zod schemas and standalone openApi exports. ' +
+			'See the package README for migration guidance. Legacy APIs remain supported.'
+	);
+}
+
 type LambdaAPIOptions = OperationObject & {
 	path: string;
 	method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
@@ -45,6 +58,7 @@ export class TypescriptToOpenApiSpec {
 		pathsToInterfaces: SchemaPath[],
 		extra?: { proxyArgs?: ProxyArgs; additionalSchemas?: Record<string, unknown>; verboseLogging?: boolean }
 	): Promise<OpenAPIObject> {
+		warnLegacyApi('TypescriptToOpenApiSpec.generate');
 		console.log('Starting OpenAPI spec generation...');
 
 		// Generate schemas from TypeScript interfaces
@@ -407,6 +421,7 @@ if (typeof global.lambdaHandlers === 'undefined') {
 }
 
 export function LambdaAPI(options: LambdaAPIOptions) {
+	warnLegacyApi('LambdaAPI');
 	// biome-ignore lint/suspicious/noExplicitAny: Needs to be any
 	return (target: any, propertyKey: string, descriptor: PropertyDescriptor) => {
 		// Store metadata on the class for later extraction
@@ -434,6 +449,7 @@ export function LambdaAPI(options: LambdaAPIOptions) {
 
 // biome-ignore lint/suspicious/noExplicitAny: Classes are too Dynamic to predict types / no need to fight typechecker
 export function registerLambdaHandler(target: any) {
+	warnLegacyApi('registerLambdaHandler');
 	// Check if the handler is already registered to avoid duplicates
 	if (!global.lambdaHandlers.some((h) => h === target)) {
 		global.lambdaHandlers.push(target);

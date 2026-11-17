@@ -90,6 +90,7 @@ type ServicePackagerOptions = {
 };
 
 export class ServicePackager {
+	private static readonly warnedLegacyPackages = new Set<string>();
 	private static handlerFileName: string;
 	private static proxyDetails: ProxyDetails;
 	private static config: Config;
@@ -188,6 +189,7 @@ export class ServicePackager {
 				alias: {
 					'@dvsa/openapi-schema-generator': '@dvsa/service-bundler/empty-module.js',
 					'routing-controllers-openapi': '@dvsa/service-bundler/empty-module.js',
+					'@inversifyjs/http-open-api': '@dvsa/service-bundler/empty-module.js',
 					yaml: '@dvsa/service-bundler/empty-module.js',
 					...(ServicePackager.coreBuildOptions.resolve?.alias || {}),
 				},
@@ -246,6 +248,7 @@ export class ServicePackager {
 					reject(new Error(errors));
 				} else {
 					if (stats) {
+						ServicePackager.warnLegacyPackages(stats);
 						console.log(
 							stats.toString({
 								colors: true,
@@ -260,6 +263,32 @@ export class ServicePackager {
 				}
 			});
 		});
+	}
+
+	private static warnLegacyPackages(stats: Stats): void {
+		// Inspect resolved modules and requests, including packages replaced by no-op aliases.
+		const legacyPackages = ['express', 'routing-controllers', 'typedi', 'routing-controllers-openapi'];
+		const modules = stats.toJson({ all: false, modules: true, nestedModules: true, reasons: true }).modules ?? [];
+		const visit = (entries: typeof modules): void => {
+			for (const entry of entries) {
+				const references = [entry.name, entry.identifier, ...(entry.reasons ?? []).map((reason) => reason.userRequest)];
+				for (const dependency of legacyPackages) {
+					if (ServicePackager.warnedLegacyPackages.has(dependency)) continue;
+					if (
+						references.some((value) => value && new RegExp(`(?:^|[/\\\\" ])${dependency}(?:$|[/\\\\" ])`).test(value))
+					) {
+						ServicePackager.warnedLegacyPackages.add(dependency);
+						console.warn(
+							`[@dvsa/service-bundler] Legacy dependency "${dependency}" is in use. ` +
+								'Plan an upgrade to Inversify HTTP, Hono and Zod; see the package README for migration guidance. ' +
+								'Legacy bundling remains supported.'
+						);
+					}
+				}
+				if (entry.modules) visit(entry.modules);
+			}
+		};
+		visit(modules);
 	}
 
 	private static async assertArtifactDoesNotReferencePackage(
@@ -367,6 +396,10 @@ export class ServicePackager {
 					// exclude the packages needed for the API proxying
 					externalsType: 'module',
 					externals: [
+						'hono',
+						/^hono\//,
+						'@hono/aws-lambda',
+						/^@inversifyjs\/http-/,
 						'cors',
 						'express',
 						'routing-controllers',
@@ -377,7 +410,9 @@ export class ServicePackager {
 					],
 				});
 
-				await ServicePackager.assertArtifactDoesNotReferencePackage(outdir, 'routing-controllers', dir);
+				for (const packageName of ['routing-controllers', 'hono', '@inversifyjs/http-']) {
+					await ServicePackager.assertArtifactDoesNotReferencePackage(outdir, packageName, dir);
+				}
 			})
 		);
 	}

@@ -18,7 +18,17 @@
         "default": "./index.cjs"
       }
     },
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./inversify": {
+      "import": {
+        "types": "./inversify.d.mts",
+        "default": "./inversify.mjs"
+      },
+      "require": {
+        "types": "./inversify.d.cts",
+        "default": "./inversify.cjs"
+      }
+    }
   },
   "files": [
     "index.cjs",
@@ -26,7 +36,11 @@
     "index.d.cts",
     "index.d.mts",
     "LICENSE",
-    "package.json"
+    "package.json",
+    "inversify.cjs",
+    "inversify.mjs",
+    "inversify.d.cts",
+    "inversify.d.mts"
   ],
   "repository": {
     "type": "git",
@@ -41,13 +55,14 @@
     "lint": "biome check src",
     "lint:fix": "npm run lint -- --write",
     "prepare": "husky",
-    "test": "jest --passWithNoTests",
+    "test": "npm run test:inversify && jest --passWithNoTests",
     "test:coverage": "npm run test -- --coverage",
     "benchmark:type-lookup": "node benchmarks/type-lookup.cjs",
     "benchmark:batch-fragmentation": "node benchmarks/batch-fragmentation.cjs",
     "build:package": "npm run build",
     "prepublishOnly": "npm run build:package && cp -r ./dist/* . && rm -rf ./dist",
-    "postpublish": "git clean -fd && npm run clean:temp"
+    "postpublish": "git clean -fd && npm run clean:temp",
+    "test:inversify": "npm run build && node --test tests/inversify.test.mjs"
   },
   "dependencies": {
     "class-validator-jsonschema": "^5.0.2",
@@ -70,9 +85,33 @@
     "routing-controllers": "^0.11.3",
     "ts-node": "^10.9.2",
     "tsdown": "^0.22.14",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "@inversifyjs/http-open-api": "^5.4.5",
+    "@inversifyjs/open-api-types": "^2.0.0",
+    "inversify": "^8.1.1",
+    "zod": "^4.6.7"
   },
   "lint-staged": {
     "*.{js,ts,mjs,css,md,ts,json}": "npm run lint:fix -- --no-errors-on-unmatched"
+  },
+  "peerDependencies": {
+    "@inversifyjs/http-open-api": "^5.4.5",
+    "@inversifyjs/open-api-types": "^2.0.0",
+    "inversify": "^8.1.1",
+    "zod": "^4.6.7"
+  },
+  "peerDependenciesMeta": {
+    "@inversifyjs/http-open-api": {
+      "optional": true
+    },
+    "@inversifyjs/open-api-types": {
+      "optional": true
+    },
+    "inversify": {
+      "optional": true
+    },
+    "zod": {
+      "optional": true
+    }
   }
 }
