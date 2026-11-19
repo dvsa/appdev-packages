@@ -205,3 +205,101 @@ The distinct-name case takes the unchanged batching path; its timing difference 
 measurement variation. Gains apply to consecutive fragmented entries sharing a path;
 alternating different files still requires separate programs. These synthetic inputs
 do not load a consuming service's Lambda handlers.
+
+## Inversify HTTP and Zod
+
+Import the dedicated entry point for Inversify HTTP services:
+
+```typescript
+import 'reflect-metadata';
+import { InversifyToOpenApiSpec } from '@dvsa/openapi-schema-generator/inversify';
+import { iocContainer } from './src/domain/ioc/container';
+
+const spec = await InversifyToOpenApiSpec.generate({
+  container: iocContainer,
+  openApiObject: {
+    openapi: '3.1.0',
+    info: { title: 'my-service', version: '1.0.0' },
+  },
+});
+```
+
+Install compatible `@inversifyjs/http-open-api`, `@inversifyjs/open-api-types`,
+`inversify` and Zod 4 dependencies in the consuming service. These are optional peers
+so legacy consumers do not need the new stack. The new entry point never loads the
+routing-controllers generator, and only loads the TypeScript compiler when
+`typeSchemas` is set.
+
+Discovery defaults to the current working directory and these globs:
+
+| Option | Default | Source |
+| --- | --- | --- |
+| `modelsGlob` | `src/domain/models/**/*.ts` | Exported Zod 4 or Zod Mini schemas |
+| `controllersGlob` | `src/proxy/resources/*.ts` | Inversify HTTP controller classes |
+| `functionsGlob` | `src/functions/*/index.ts` | Standalone `openApi` exports |
+
+Override `cwd` or any glob for other layouts; set a glob to `false` to disable it.
+Use Bun for the starter's TypeScript/decorator/path-alias sources, or another configured
+TypeScript loader. Node consumers can instead discover compiled JavaScript files.
+The service supplies its configured container, API metadata and output serialization.
+Generation returns a spec; it does not delete or write output files.
+
+Schemas drop a trailing `Schema` and capitalise the first letter (`userSchema` becomes
+`User`). Duplicate names, including collisions with seed schemas, fail generation.
+Standalone modules can export `{ path, pathItem }` as `openApi`; modules without that
+export are skipped. Invalid metadata and import failures stop generation. Lambda
+methods merge into existing paths, with the Lambda definition taking precedence for
+the same method, matching the starter's existing behaviour.
+
+### TypeScript interfaces and type aliases
+
+Zod schemas exist at runtime, so discovery is fast. Interfaces and type aliases are
+erased at runtime, so they need the TypeScript compiler. Pass them as `typeSchemas`,
+using the same `{ path, interfaceName? }` entries as the legacy `pathsToInterfaces`:
+
+```typescript
+const spec = await InversifyToOpenApiSpec.generate({
+  container: iocContainer,
+  openApiObject,
+  typeSchemas: [
+    { path: 'src/domain/models/UserResponseModel.ts' },            // every exported type
+    { path: 'src/domain/types/*.ts' },                              // globs work
+    { path: 'src/domain/vehicle.ts', interfaceName: 'Vehicle' },    // one type and its references
+  ],
+});
+```
+
+| Option | Default | Purpose |
+| --- | --- | --- |
+| `typeSchemas` | `[]` | TypeScript files/globs, relative to `cwd`. Empty means the compiler is not loaded |
+| `tsconfig` | `<cwd>/tsconfig.json` | Compiler options and path aliases used to resolve types |
+| `typeCheck` | `false` | Run TypeScript diagnostics during generation. Leave off and type check in lint/CI |
+
+Referenced types are included automatically, and `$ref`s point to
+`#/components/schemas/`. Names collide with Zod and seed schemas in the same way as
+Zod names do, and fail generation. Point `typeSchemas` at type-only files: files that
+derive types from Zod (`z.infer`) or export classes are better left to `modelsGlob`.
+Generation costs roughly half a second for a small model set, and grows with the
+size of the type graph rather than the number of controllers.
+
+Use whichever source fits each model. Request bodies validated at runtime belong in
+Zod, with `z.infer` providing the TypeScript type. Response shapes, shared contracts
+and types from other packages can stay as interfaces in `typeSchemas`.
+
+`generateTypeSchemas(paths, { cwd, tsconfig, skipTypeCheck })` is also exported from
+the root entry point for scripts that only need component schemas.
+
+### Migrating legacy consumers
+
+The root `TypescriptToOpenApiSpec`, `LambdaAPI` and `registerLambdaHandler` APIs remain
+supported. Each emits a warning once per process when invoked, with upgrade guidance.
+Importing the package alone does not warn. For Inversify HTTP services, use the new
+entry point, replace class-validator models with Zod schemas, use Inversify OpenAPI
+decorators on controllers, and replace Lambda decorators with `openApi` exports.
+See the starter's
+[`migrate-to-inversify`](https://github.com/dvsa/dvsa-serverless-starter/tree/main/.agents/skills/migrate-to-inversify)
+workflow for the full stack migration. Move `pathsToInterfaces` entries to
+`typeSchemas` unchanged; there is no need to rewrite interfaces as Zod schemas.
+
+Run `npm test` for both the legacy generator tests and the built ESM/CommonJS
+entry point integration tests. Use `npm run test:inversify` to run only the latter.

@@ -2,23 +2,32 @@
 
 import 'reflect-metadata';
 import fs from 'node:fs/promises';
-import { join, parse, resolve } from 'node:path';
+import { join } from 'node:path';
 import type { validationMetadatasToSchemas } from 'class-validator-jsonschema';
-import type { OpenAPIObject, OperationObject, PathItemObject } from 'openapi3-ts/oas30';
+import type { OpenAPIObject, OperationObject, PathItemObject, SchemaObject } from 'openapi3-ts/oas30';
 import type { MetadataArgsStorage, RoutingControllersOptions } from 'routing-controllers';
 import type { routingControllersToSpec } from 'routing-controllers-openapi';
-import { type Config, createProgram, DEFAULT_CONFIG } from 'ts-json-schema-generator';
-import { createIndexedGenerator } from './indexed-generator';
+import { generateDefinitions, type SchemaPath, transformReferences } from './type-schemas';
+
+export { generateTypeSchemas, type SchemaPath, type TypeSchemaOptions } from './type-schemas';
+
+const warnedLegacyApis = new Set<string>();
+
+function warnLegacyApi(api: string): void {
+	if (warnedLegacyApis.has(api)) return;
+	warnedLegacyApis.add(api);
+	console.warn(
+		`[@dvsa/openapi-schema-generator] Legacy API ${api} is in use. ` +
+			'For Inversify HTTP services, migrate to InversifyToOpenApiSpec from ' +
+			'@dvsa/openapi-schema-generator/inversify, Zod schemas and standalone openApi exports. ' +
+			'See the package README for migration guidance. Legacy APIs remain supported.'
+	);
+}
 
 type LambdaAPIOptions = OperationObject & {
 	path: string;
 	method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 };
-
-export interface SchemaPath {
-	path: string;
-	interfaceName?: string;
-}
 
 type ProxyArgs = {
 	storage: MetadataArgsStorage;
@@ -45,10 +54,17 @@ export class TypescriptToOpenApiSpec {
 		pathsToInterfaces: SchemaPath[],
 		extra?: { proxyArgs?: ProxyArgs; additionalSchemas?: Record<string, unknown>; verboseLogging?: boolean }
 	): Promise<OpenAPIObject> {
+		warnLegacyApi('TypescriptToOpenApiSpec.generate');
 		console.log('Starting OpenAPI spec generation...');
 
 		// Generate schemas from TypeScript interfaces
-		const config = await TypescriptToOpenApiSpec.generateDefinitions(pathsToInterfaces);
+		const config = {
+			definitions: generateDefinitions(pathsToInterfaces, {
+				cwd: process.cwd(),
+				tsconfig: `${process.cwd()}/tsconfig.json`,
+				skipTypeCheck: false,
+			}) as Record<string, SchemaObject>,
+		};
 
 		let finalSpec: OpenAPIObject = {
 			...openAPIObject,
@@ -194,7 +210,7 @@ export class TypescriptToOpenApiSpec {
 		}
 
 		// Transform #/definitions/ references to #/components/schemas/ for OpenAPI 3.x compliance
-		finalSpec = TypescriptToOpenApiSpec.transformReferences(finalSpec);
+		finalSpec = transformReferences(finalSpec);
 
 		// Sanitise schemas
 		for (const schema of Object.values(finalSpec.components?.schemas ?? {})) {
@@ -230,160 +246,6 @@ export class TypescriptToOpenApiSpec {
 			),
 		};
 	}
-
-	/**
-	 * Recursively transform all #/definitions/ references to #/components/schemas/
-	 * This ensures OpenAPI 3.x compliance since ts-json-schema-generator uses JSON Schema format
-	 */
-	private static transformReferences<T>(obj: T): T {
-		if (obj === null || obj === undefined) {
-			return obj;
-		}
-
-		if (typeof obj === 'string') {
-			// Transform the reference
-			return obj.replace(/#\/definitions\//g, '#/components/schemas/') as T;
-		}
-
-		if (Array.isArray(obj)) {
-			return obj.map((item) => TypescriptToOpenApiSpec.transformReferences(item)) as T;
-		}
-
-		if (typeof obj === 'object') {
-			// biome-ignore lint/suspicious/noExplicitAny: Allowed for doc gen
-			const transformed: any = {};
-
-			for (const [key, value] of Object.entries(obj)) {
-				transformed[key] = TypescriptToOpenApiSpec.transformReferences(value);
-			}
-			return transformed;
-		}
-
-		return obj;
-	}
-
-	private static async generateDefinitions(paths: SchemaPath[]) {
-		const definitions = {};
-		let previousPath: string | undefined;
-		let previousProgram: Config['tsProgram'];
-
-		for (const batch of TypescriptToOpenApiSpec.createSchemaBatches(paths)) {
-			if (batch.length === 1) {
-				const path = batch[0].path;
-				if (path !== previousPath || !previousProgram) {
-					previousProgram = createProgram({
-						...DEFAULT_CONFIG,
-						path,
-						tsconfig: `${process.cwd()}/tsconfig.json`,
-					});
-					previousPath = path;
-				}
-				// Share compiler work, but retain a fresh parser/formatter and an ordered
-				// schema merge per entry. Even a barrel can contain conflicting child names.
-				Object.assign(definitions, TypescriptToOpenApiSpec.generateDefinitionBatch(batch, path, previousProgram));
-				continue;
-			}
-
-			previousPath = undefined;
-			previousProgram = undefined;
-			const combinedPath = TypescriptToOpenApiSpec.combinePaths(batch.map(({ path }) => path));
-
-			if (combinedPath === undefined) {
-				for (const schemaPath of batch) {
-					Object.assign(definitions, TypescriptToOpenApiSpec.generateDefinitionBatch([schemaPath]));
-				}
-				continue;
-			}
-
-			try {
-				Object.assign(definitions, TypescriptToOpenApiSpec.generateDefinitionBatch(batch, combinedPath));
-			} catch (error) {
-				if (batch.length === 1) {
-					throw error;
-				}
-
-				// Files that cannot share a TypeScript program (for example, because they
-				// declare conflicting globals) retain the original per-entry behaviour.
-				for (const schemaPath of batch) {
-					Object.assign(definitions, TypescriptToOpenApiSpec.generateDefinitionBatch([schemaPath]));
-				}
-			}
-		}
-
-		return { definitions };
-	}
-
-	private static generateDefinitionBatch(
-		paths: SchemaPath[],
-		combinedPath = paths[0].path,
-		tsProgram?: Config['tsProgram']
-	) {
-		const types = paths.map(({ interfaceName }) => interfaceName ?? '*');
-		const type = types[0] === '*' ? '*' : types.length === 1 ? types[0] : types;
-		const config: Config = {
-			path: combinedPath,
-			tsProgram,
-			tsconfig: `${process.cwd()}/tsconfig.json`,
-			type,
-		};
-		const generator = createIndexedGenerator(config);
-
-		return generator.createSchema(type).definitions;
-	}
-
-	private static createSchemaBatches(paths: SchemaPath[]): SchemaPath[][] {
-		const batches: SchemaPath[][] = [];
-		let start = 0;
-
-		while (start < paths.length) {
-			const wildcardBatch = (paths[start].interfaceName ?? '*') === '*';
-			let end = start + 1;
-
-			while (end < paths.length && ((paths[end].interfaceName ?? '*') === '*') === wildcardBatch) {
-				end += 1;
-			}
-
-			const batch = paths.slice(start, end);
-			const types = batch.map(({ interfaceName }) => interfaceName ?? '*');
-
-			if (!wildcardBatch && new Set(types).size !== types.length) {
-				batches.push(...batch.map((schemaPath) => [schemaPath]));
-			} else {
-				batches.push(batch);
-			}
-
-			start = end;
-		}
-
-		return batches;
-	}
-
-	private static combinePaths(paths: string[]): string | undefined {
-		const uniquePaths = [...new Set(paths)];
-
-		if (uniquePaths.length === 1) {
-			return uniquePaths[0];
-		}
-
-		// Commas delimit brace alternatives, so retain the single-file path for uncommon
-		// patterns or filenames containing one rather than changing their meaning.
-		if (uniquePaths.some((path) => path.includes(','))) {
-			return undefined;
-		}
-
-		const absolutePaths = uniquePaths.map((path) => resolve(path));
-		const roots = new Set(absolutePaths.map((path) => parse(path).root));
-
-		if (roots.size !== 1) {
-			return undefined;
-		}
-
-		const root = parse(absolutePaths[0]).root;
-		const normalisedRoot = root.replaceAll('\\', '/');
-		const alternatives = absolutePaths.map((path) => path.slice(root.length).replaceAll('\\', '/'));
-
-		return `${normalisedRoot}{${alternatives.join(',')}}`;
-	}
 }
 
 declare global {
@@ -407,6 +269,7 @@ if (typeof global.lambdaHandlers === 'undefined') {
 }
 
 export function LambdaAPI(options: LambdaAPIOptions) {
+	warnLegacyApi('LambdaAPI');
 	// biome-ignore lint/suspicious/noExplicitAny: Needs to be any
 	return (target: any, propertyKey: string, descriptor: PropertyDescriptor) => {
 		// Store metadata on the class for later extraction
@@ -434,6 +297,7 @@ export function LambdaAPI(options: LambdaAPIOptions) {
 
 // biome-ignore lint/suspicious/noExplicitAny: Classes are too Dynamic to predict types / no need to fight typechecker
 export function registerLambdaHandler(target: any) {
+	warnLegacyApi('registerLambdaHandler');
 	// Check if the handler is already registered to avoid duplicates
 	if (!global.lambdaHandlers.some((h) => h === target)) {
 		global.lambdaHandlers.push(target);
