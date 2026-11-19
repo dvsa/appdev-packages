@@ -6,6 +6,9 @@ import { SwaggerUiProvider } from '@inversifyjs/http-open-api';
 import type { OpenApi3Dot1Object, OpenApi3Dot1PathItemObject } from '@inversifyjs/open-api-types/v3Dot1';
 import type { Container } from 'inversify';
 import { type ZodType, z } from 'zod';
+import type { SchemaPath } from './type-schemas';
+
+export type { SchemaPath } from './type-schemas';
 
 export interface LambdaOpenApi {
 	path: string;
@@ -22,6 +25,23 @@ export interface InversifyOpenApiOptions {
 	modelsGlob?: string | false;
 	controllersGlob?: string | false;
 	functionsGlob?: string | false;
+	/**
+	 * TypeScript interfaces and type aliases to document alongside Zod schemas, as in the
+	 * legacy `pathsToInterfaces`. Paths may be files or globs, relative to `cwd`. The
+	 * TypeScript compiler is only loaded when this is non-empty.
+	 */
+	typeSchemas?: SchemaPath[];
+	/** tsconfig used for `typeSchemas`. Defaults to `<cwd>/tsconfig.json`. */
+	tsconfig?: string;
+	/** Run TypeScript diagnostics while generating `typeSchemas`. Defaults to false; type check in lint/CI. */
+	typeCheck?: boolean;
+}
+
+function addSchema(schemas: Record<string, unknown>, key: string, schema: unknown, source: string): void {
+	if (!key || Object.hasOwn(schemas, key)) {
+		throw new Error(`Duplicate or empty schema name "${key}" (from ${source}). Rename one of them.`);
+	}
+	schemas[key] = schema;
 }
 
 const isZodType = (value: unknown): value is ZodType =>
@@ -58,18 +78,30 @@ export class InversifyToOpenApiSpec {
 			modelsGlob = 'src/domain/models/**/*.ts',
 			controllersGlob = 'src/proxy/resources/*.ts',
 			functionsGlob = 'src/functions/*/index.ts',
+			typeSchemas = [],
+			tsconfig,
+			typeCheck = false,
 		} = options;
-		const schemas = { ...openApiObject.components?.schemas };
+		const schemas: Record<string, unknown> = { ...openApiObject.components?.schemas };
+
+		if (typeSchemas.length > 0) {
+			// Lazy: keeps the TypeScript compiler out of Zod-only generation.
+			const { generateTypeSchemas } = await import('./type-schemas');
+			const generated = generateTypeSchemas(typeSchemas, { cwd, tsconfig, skipTypeCheck: !typeCheck });
+			for (const [key, schema] of Object.entries(generated)) {
+				addSchema(schemas, key, schema, 'TypeScript typeSchemas');
+			}
+		}
+
 		for (const { file, module } of await importAllFrom(modelsGlob, cwd)) {
 			for (const [exportName, value] of Object.entries(module)) {
 				if (!isZodType(value)) continue;
-				const key = toSchemaName(exportName);
-				if (!key || Object.hasOwn(schemas, key)) {
-					throw new Error(
-						`Duplicate or empty schema name "${key}" (from "${exportName}" in ${relative(cwd, file)}). Rename one of them.`
-					);
-				}
-				schemas[key] = z.toJSONSchema(value, { target: 'openapi-3.0' });
+				addSchema(
+					schemas,
+					toSchemaName(exportName),
+					z.toJSONSchema(value, { target: 'openapi-3.0' }),
+					`"${exportName}" in ${relative(cwd, file)}`
+				);
 			}
 		}
 
@@ -106,7 +138,7 @@ export class InversifyToOpenApiSpec {
 				openApiObject: {
 					...openApiObject,
 					paths: { ...openApiObject.paths },
-					components: { ...openApiObject.components, schemas },
+					components: { ...openApiObject.components, schemas: schemas as never },
 				},
 				path: '/docs',
 			},

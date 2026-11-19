@@ -40,7 +40,11 @@
     "inversify.cjs",
     "inversify.mjs",
     "inversify.d.cts",
-    "inversify.d.mts"
+    "inversify.d.mts",
+    "type-schemas-*.cjs",
+    "type-schemas-*.mjs",
+    "type-schemas-*.d.cts",
+    "type-schemas-*.d.mts"
   ],
   "repository": {
     "type": "git",

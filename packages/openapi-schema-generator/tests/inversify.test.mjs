@@ -96,3 +96,77 @@ test('supports absent directories, explicit opt-outs and CommonJS exports', asyn
 	const require = createRequire(import.meta.url);
 	assert.equal(typeof require('../dist/inversify.cjs').InversifyToOpenApiSpec.generate, 'function');
 });
+
+const tsconfig = JSON.stringify({ compilerOptions: { strict: true, module: 'esnext', moduleResolution: 'bundler' } });
+
+test('merges TypeScript type schemas with Zod schemas and rewrites references', async () => {
+	const cwd = await fixture({
+		'tsconfig.json': tsconfig,
+		'types/vehicle.ts': `export interface Vehicle { vin: string; owner: Owner; tags?: string[] }
+      export interface Owner { name: string }
+      export type Status = 'active' | 'archived';`,
+		'models/user.mjs': `import * as z from 'zod/mini'; export const userSchema = z.object({ name: z.string() });`,
+	});
+	const spec = await InversifyToOpenApiSpec.generate(options(cwd, { typeSchemas: [{ path: 'types/*.ts' }] }));
+	const { User, Vehicle, Owner, Status } = spec.components.schemas;
+	assert.equal(User.properties.name.type, 'string');
+	assert.deepEqual(Vehicle.required, ['vin', 'owner']);
+	assert.equal(Vehicle.properties.owner.$ref, '#/components/schemas/Owner');
+	assert.equal(Owner.properties.name.type, 'string');
+	assert.deepEqual(Status.enum, ['active', 'archived']);
+});
+
+test('generates only the named type and its references', async () => {
+	const cwd = await fixture({
+		'tsconfig.json': tsconfig,
+		'types/vehicle.ts': `export interface Vehicle { owner: Owner } export interface Owner { name: string } export interface Unused { x: number }`,
+	});
+	const spec = await InversifyToOpenApiSpec.generate(
+		options(cwd, { typeSchemas: [{ path: 'types/vehicle.ts', interfaceName: 'Vehicle' }] })
+	);
+	assert.deepEqual(Object.keys(spec.components.schemas).sort(), ['Owner', 'Vehicle']);
+});
+
+test('rejects collisions between TypeScript and Zod schemas', async () => {
+	const cwd = await fixture({
+		'tsconfig.json': tsconfig,
+		'types/user.ts': `export interface User { id: string }`,
+		'models/user.mjs': `import * as z from 'zod/mini'; export const userSchema = z.object({ name: z.string() });`,
+	});
+	await assert.rejects(
+		InversifyToOpenApiSpec.generate(options(cwd, { typeSchemas: [{ path: 'types/user.ts' }] })),
+		/Duplicate or empty schema name "User"/
+	);
+});
+
+test('reports type errors only when typeCheck is enabled', async () => {
+	const cwd = await fixture({
+		'tsconfig.json': tsconfig,
+		'types/bad.ts': `export interface Bad { n: number } export const x: number = 'nope';`,
+	});
+	const typeSchemas = [{ path: 'types/bad.ts', interfaceName: 'Bad' }];
+	const spec = await InversifyToOpenApiSpec.generate(options(cwd, { typeSchemas }));
+	assert.equal(spec.components.schemas.Bad.properties.n.type, 'number');
+	await assert.rejects(
+		InversifyToOpenApiSpec.generate(options(cwd, { typeSchemas, typeCheck: true })),
+		/Type check error/
+	);
+});
+
+test('renames generic instantiations to valid component names and rewrites their refs', async () => {
+	const cwd = await fixture({
+		'tsconfig.json': tsconfig,
+		'types/page.ts': `export interface Page<T> { items: T[] } export interface Item { id: string }
+      export interface Listing { page: Page<Item> }`,
+	});
+	const spec = await InversifyToOpenApiSpec.generate(
+		options(cwd, { typeSchemas: [{ path: 'types/page.ts', interfaceName: 'Listing' }] })
+	);
+	const { schemas } = spec.components;
+	assert.ok(
+		Object.keys(schemas).every((name) => /^[A-Za-z0-9._-]+$/.test(name)),
+		Object.keys(schemas).join()
+	);
+	assert.equal(schemas.Listing.properties.page.$ref, '#/components/schemas/Page_Item');
+	assert.equal(schemas.Page_Item.properties.items.items.$ref, '#/components/schemas/Item');
+});
